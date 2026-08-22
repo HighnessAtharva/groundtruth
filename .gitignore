@@ -1,0 +1,4 @@
+node_modules/
+.groundtruth/
+*.log
+.DS_Store
