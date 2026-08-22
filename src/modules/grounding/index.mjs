@@ -178,7 +178,7 @@ export const stages = [
               why: 'Grounding is on for this profile but no claim is anchored.',
               fix: {
                 kind: 'source',
-                instruction: `Scaffold one: npx groundtruth draft ${doc.path} --write`,
+                instruction: `Scaffold one: npx groundtruth-cli draft ${doc.path} --write`,
               },
             }));
           }

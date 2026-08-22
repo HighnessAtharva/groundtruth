@@ -5,7 +5,7 @@ allowed-tools: Bash, Read
 ---
 
 ```bash
-npx groundtruth explain $ARGUMENTS
+npx groundtruth-cli explain $ARGUMENTS
 ```
 
 With no argument it lists every rule with its module, whether it can block, its

@@ -4,8 +4,8 @@ Two adapters on one document, and the only example that shows a source moving un
 a claim. Grounding and readability on, SEO off.
 
 ```bash
-npx groundtruth check
-npx groundtruth report
+npx groundtruth-cli check
+npx groundtruth-cli report
 ```
 
 **It fails on the first run, on purpose.** Four blocking findings and a STALE

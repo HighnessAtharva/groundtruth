@@ -4,7 +4,7 @@
 // SEO is off on purpose. This piece runs on a personal blog with no search-intent
 // target, and leaving it off is the proof that the three modules are independent.
 
-import { records, web } from 'groundtruth/adapters';
+import { records, web } from 'groundtruth-cli/adapters';
 
 export default {
   // Committed, so the pins and the snapshots travel with the repo and the whole

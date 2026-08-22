@@ -61,15 +61,19 @@ jobs:
           fi
           echo "publishing $manifest"
 
+      # The package name comes from the manifest, never a literal. It was
+      # hardcoded once, and renaming the package left these steps checking a
+      # name nobody was publishing.
       - name: this version is not already on the registry
         if: github.event_name == 'release'
         run: |
+          name="$(node -p 'require("./package.json").name')"
           version="$(node -p 'require("./package.json").version')"
-          if npm view "groundtruth@$version" version --silent 2>/dev/null; then
-            echo "::error::groundtruth@$version is already published. Bump the version."
+          if npm view "$name@$version" version --silent 2>/dev/null; then
+            echo "::error::$name@$version is already published. Bump the version."
             exit 1
           fi
-          echo "$version is unclaimed"
+          echo "$name@$version is unclaimed"
 
       - name: tests
         run: npm test
@@ -87,9 +91,9 @@ jobs:
 
       - name: what would ship
         run: |
-          tar -tzf groundtruth-*.tgz | sed 's|^package/||' | sort
+          tar -tzf ./*.tgz | sed 's|^package/||' | sort
           echo "---"
-          ls -lh groundtruth-*.tgz
+          ls -lh ./*.tgz
 
       - name: publish
         if: github.event_name == 'release'
@@ -100,10 +104,11 @@ jobs:
       - name: the registry agrees
         if: github.event_name == 'release'
         run: |
+          name="$(node -p 'require("./package.json").name')"
           version="$(node -p 'require("./package.json").version')"
           for attempt in 1 2 3 4 5; do
-            if [ "$(npm view "groundtruth@$version" version --silent 2>/dev/null)" = "$version" ]; then
-              echo "groundtruth@$version is live"
+            if [ "$(npm view "$name@$version" version --silent 2>/dev/null)" = "$version" ]; then
+              echo "$name@$version is live"
               exit 0
             fi
             echo "not visible yet, waiting"
@@ -116,16 +121,21 @@ jobs:
       - name: install the published package and run it
         if: github.event_name == 'release'
         run: |
+          name="$(node -p 'require("./package.json").name')"
           version="$(node -p 'require("./package.json").version')"
           work="$(mktemp -d)"
           cd "$work"
           npm init -y >/dev/null
-          npm install --no-audit --no-fund "groundtruth@$version"
+          npm install --no-audit --no-fund "$name@$version"
           mkdir -p docs
           printf '# A doc\n\nThe cache holds 512 items and evicts the oldest first.\n' > docs/a.md
-          npx groundtruth --version
-          npx groundtruth init --modules readability
-          npx groundtruth check
+          # Call the bin directly. The package is groundtruth-cli and the command
+          # is `groundtruth`, so this also proves the bin map survived publishing.
+          gt=./node_modules/.bin/groundtruth
+          test -x "$gt" || { echo "::error::the package exposes no groundtruth command"; exit 1; }
+          "$gt" --version
+          "$gt" init --modules readability
+          "$gt" check
 
       - uses: actions/upload-artifact@v4
         if: always()

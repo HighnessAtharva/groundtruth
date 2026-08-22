@@ -6,7 +6,7 @@ which finding each change closed.
 ## 0. Run it and read the failure
 
 ```bash
-npx groundtruth check
+npx groundtruth-cli check
 ```
 
 Exit code 1. Two errors and one warning:
@@ -24,13 +24,13 @@ Look at the exit code first, then at `blocking` in the JSON. Everything else can
 wait.
 
 ```bash
-npx groundtruth check --json | jq '.summary'
+npx groundtruth-cli check --json | jq '.summary'
 ```
 
 ## 1. Look at the contradiction before you touch anything
 
 ```bash
-npx groundtruth explain ground.verdict
+npx groundtruth-cli explain ground.verdict
 cat sources/mansion-notes/items/armor-key.md
 grep -rl "Armor Key" sources/mansion-notes/doors/
 ```
@@ -53,7 +53,7 @@ Two legitimate resolutions:
 For this example, take the first. The door records are the count.
 
 ```bash
-npx groundtruth check
+npx groundtruth-cli check
 ```
 
 One error left.
@@ -74,7 +74,7 @@ Never set `VERIFIED` to make the finding go away. That is the one thing this too
 exists to stop.
 
 ```bash
-npx groundtruth check
+npx groundtruth-cli check
 ```
 
 Zero errors. The INFERRED warning stays, and that is correct.
@@ -82,7 +82,7 @@ Zero errors. The INFERRED warning stays, and that is correct.
 ## 3. Understand why the warning stays
 
 ```bash
-npx groundtruth explain ground.verdict
+npx groundtruth-cli explain ground.verdict
 ```
 
 An INFERRED claim was computed rather than quoted, so the derivation is the thing
@@ -103,7 +103,7 @@ desyncs its spans.
 
 ```bash
 # Change "The Sword Key opens six doors" to "The Sword Key opens six separate doors"
-npx groundtruth check
+npx groundtruth-cli check
 ```
 
 ```
@@ -117,7 +117,7 @@ The suggestion is a real substring of the document, so applying it cannot break
 the verbatim guarantee.
 
 ```bash
-npx groundtruth check --fix-matches
+npx groundtruth-cli check --fix-matches
 ```
 
 It prints the diff, rewrites the span map, and re-runs. If two candidates had
@@ -126,7 +126,7 @@ scored close, it would have printed the top three and changed nothing.
 ## 5. Read the report
 
 ```bash
-npx groundtruth report
+npx groundtruth-cli report
 ```
 
 Open the path it prints. The prose is painted: green for a verified claim, amber

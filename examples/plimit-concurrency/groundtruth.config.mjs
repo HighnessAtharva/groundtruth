@@ -5,8 +5,8 @@
 // HTTPS at the SHA in groundtruth.lock.json and caches by content address, and the
 // cache directory is committed, so this example runs with no network after a clone.
 
-import { git } from 'groundtruth/adapters';
-import { longform } from 'groundtruth/presets';
+import { git } from 'groundtruth-cli/adapters';
+import { longform } from 'groundtruth-cli/presets';
 
 export default {
   // Committed, so a fresh clone verifies every quote offline.

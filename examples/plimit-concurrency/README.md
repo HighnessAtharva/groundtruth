@@ -4,8 +4,8 @@ All three modules on. The only example where a reader can check a quote in one
 click, because every code claim links to a line on GitHub at an exact SHA.
 
 ```bash
-npx groundtruth check
-npx groundtruth report
+npx groundtruth-cli check
+npx groundtruth-cli report
 ```
 
 **It fails on the first run, on purpose.** Six blocking findings. `WALKTHROUGH.md`
@@ -81,7 +81,7 @@ Grounding is the expensive part to author. You do not have to adopt it to get va
 from the other two:
 
 ```bash
-npx groundtruth check --module readability --module seo
+npx groundtruth-cli check --module readability --module seo
 ```
 
 That covers the no-span-map case without needing a fourth example, and it is the

@@ -14,13 +14,13 @@ claim is anchored.
 Before you finish any edit to a document:
 
 ```bash
-npx groundtruth check <path>
+npx groundtruth-cli check <path>
 ```
 
 To read the result:
 
 ```bash
-npx groundtruth check --json
+npx groundtruth-cli check --json
 ```
 
 ## Exit codes
@@ -156,7 +156,7 @@ The prose was edited after the span was written. The suggestion is a real substr
 the document, so applying it cannot break the verbatim guarantee.
 
 ```bash
-npx groundtruth check --fix-matches
+npx groundtruth-cli check --fix-matches
 ```
 
 It prints the diff, rewrites the span map, and re-runs. When two candidates score
@@ -166,15 +166,15 @@ silently is a corruption.
 ## Every command
 
 ```bash
-npx groundtruth init                    # set up in this repo
-npx groundtruth check [paths...]        # blocking
-npx groundtruth check --changed         # only what this branch touched
-npx groundtruth check --frozen          # CI: refuse to verify at a moved pin
-npx groundtruth check --format sarif    # for code scanning
-npx groundtruth report                  # the HTML, non-blocking
-npx groundtruth draft <path> --write    # scaffold a span map
-npx groundtruth draft <path> --update   # add new candidates, keep existing spans
-npx groundtruth resolve                 # the only networked command
-npx groundtruth resolve --refresh       # move the pins
-npx groundtruth explain <rule>          # why a rule exists
+npx groundtruth-cli init                    # set up in this repo
+npx groundtruth-cli check [paths...]        # blocking
+npx groundtruth-cli check --changed         # only what this branch touched
+npx groundtruth-cli check --frozen          # CI: refuse to verify at a moved pin
+npx groundtruth-cli check --format sarif    # for code scanning
+npx groundtruth-cli report                  # the HTML, non-blocking
+npx groundtruth-cli draft <path> --write    # scaffold a span map
+npx groundtruth-cli draft <path> --update   # add new candidates, keep existing spans
+npx groundtruth-cli resolve                 # the only networked command
+npx groundtruth-cli resolve --refresh       # move the pins
+npx groundtruth-cli explain <rule>          # why a rule exists
 ```

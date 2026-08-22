@@ -3,8 +3,8 @@
 The smallest setup this tool supports. One module, one adapter, one loop.
 
 ```bash
-npx groundtruth check
-npx groundtruth report
+npx groundtruth-cli check
+npx groundtruth-cli report
 ```
 
 **It fails on the first run, on purpose.** Two blocking findings and one warning.

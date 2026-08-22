@@ -89,8 +89,8 @@ invented specific reads credible and a reader cannot catch it.
 ## Checking as you go
 
 ```bash
-npx groundtruth check <path>
-npx groundtruth explain read.hard
+npx groundtruth-cli check <path>
+npx groundtruth-cli explain read.hard
 ```
 
 Fix while the document is open, not at the end. A finding costs a minute now and an

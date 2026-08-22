@@ -32,7 +32,7 @@ Needs a pin, and refuses to read a moving branch tip without one, because a quot
 checked against a moving target is not checked. Pin with:
 
 ```bash
-npx groundtruth resolve --refresh
+npx groundtruth-cli resolve --refresh
 ```
 
 The permalink is `https://<host>/<repo>/blob/<sha>/<path>#L<line>`. When the line

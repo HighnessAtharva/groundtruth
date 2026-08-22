@@ -10,9 +10,9 @@ on the first run, on purpose.** A green example teaches nothing.
 | Code quoted at a pinned commit, with permalinks, and the full SEO gate | [`plimit-concurrency/`](plimit-concurrency/) | after one resolve | all three |
 
 ```bash
-npx groundtruth check examples/resident-evil
-npx groundtruth check examples/steam-completion-rates
-npx groundtruth check examples/plimit-concurrency
+npx groundtruth-cli check examples/resident-evil
+npx groundtruth-cli check examples/steam-completion-rates
+npx groundtruth-cli check examples/plimit-concurrency
 ```
 
 Each directory has a `README.md` explaining what it demonstrates and a

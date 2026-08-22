@@ -11,7 +11,7 @@ this example runs with no network after a clone.
 To move the pin:
 
 ```bash
-npx groundtruth resolve --refresh
+npx groundtruth-cli resolve --refresh
 ```
 
 That rewrites `groundtruth.lock.json` and fetches the file again at the new SHA.

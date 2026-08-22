@@ -82,7 +82,7 @@ match: 'collects with Promise.all',     // correct
 
 The same applies to `**bold**`, `_italics_` and `[link text](url)`. Quote what a
 reader sees. The finding carries the nearest sentence and a score. Above 0.82 with
-nothing else close, `npx groundtruth check --fix-matches` applies it for you.
+nothing else close, `npx groundtruth-cli check --fix-matches` applies it for you.
 
 **`ground.match-ambiguous`** — the text appears more than once. Lengthen the match
 until it is unique. If the sentence really is duplicated in the document, that is
@@ -95,12 +95,12 @@ file that actually says it. Never widen the quote to swallow the mismatch.
 ## Running it
 
 ```bash
-npx groundtruth check <path>          # blocking. exit 1 on a blocking finding
-npx groundtruth check --json          # the machine contract, stdout only
-npx groundtruth draft <path> --write  # scaffold a map, all TODO
-npx groundtruth draft <path> --update # add new candidates, keep existing spans
-npx groundtruth explain <rule>        # why a rule exists and what it measures
-npx groundtruth resolve               # the only command that touches the network
+npx groundtruth-cli check <path>          # blocking. exit 1 on a blocking finding
+npx groundtruth-cli check --json          # the machine contract, stdout only
+npx groundtruth-cli draft <path> --write  # scaffold a map, all TODO
+npx groundtruth-cli draft <path> --update # add new candidates, keep existing spans
+npx groundtruth-cli explain <rule>        # why a rule exists and what it measures
+npx groundtruth-cli resolve               # the only command that touches the network
 ```
 
 ## Reading the JSON
