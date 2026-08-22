@@ -129,9 +129,16 @@ export async function loadSpanMaps(docs, config) {
         problems.push(`${where} has unknown verdict '${verdict}'. One of: ${Object.keys(config.verdicts).join(', ')}`);
       } else {
         const requires = config.verdicts[verdict].requires || [];
-        for (const field of requires) {
-          if (span[field] == null || span[field] === '') {
-            problems.push(`${where} is ${verdict}, which requires '${field}'.`);
+        for (const requirement of requires) {
+          // A nested array is an "at least one of these" requirement.
+          const fields = Array.isArray(requirement) ? requirement : [requirement];
+          const satisfied = fields.some((field) => span[field] != null && span[field] !== '');
+          if (!satisfied) {
+            problems.push(
+              fields.length === 1
+                ? `${where} is ${verdict}, which requires '${fields[0]}'.`
+                : `${where} is ${verdict}, which requires one of: ${fields.join(', ')}.`,
+            );
           }
         }
       }

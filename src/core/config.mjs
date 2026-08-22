@@ -22,8 +22,11 @@ export const DEFAULT_VERDICTS = {
   VERIFIED: { severity: 'off', label: 'Verified', hue: 158, requires: ['source', 'quote'] },
   EXTERNAL: { severity: 'off', label: 'External source', hue: 210, requires: ['source'] },
   FIGURE: { severity: 'off', label: 'Read off a figure', hue: 275, requires: [] },
-  INFERRED: { severity: 'warn', label: 'Inferred', hue: 38, requires: ['note'] },
-  'DOC-DEFECT': { severity: 'warn', label: 'Source is wrong', hue: 22, requires: ['source', 'note'] },
+  // A nested array means "at least one of these". A derivation explains an
+  // inference at least as well as a note does, and demanding both would push
+  // authors to write the same sentence twice.
+  INFERRED: { severity: 'warn', label: 'Inferred', hue: 38, requires: [['note', 'derivation']] },
+  'DOC-DEFECT': { severity: 'warn', label: 'Source is wrong', hue: 22, requires: ['source', ['note', 'derivation']] },
   UNSOURCED: { severity: 'error', label: 'No source found', hue: 0, requires: [], emphatic: true },
   CONTRADICTED: { severity: 'error', label: 'Contradicted', hue: 350, requires: ['note'], emphatic: true },
 };

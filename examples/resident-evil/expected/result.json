@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "groundtruth",
+    "version": "0.1.0"
+  },
+  "run": {
+    "startedAt": "2026-08-22T12:59:14.955Z",
+    "durationMs": 47,
+    "configPath": "D:\\Atharva\\groundtruth\\examples\\resident-evil\\groundtruth.config.mjs",
+    "modules": {
+      "grounding": true,
+      "readability": false,
+      "seo": false,
+      "style": false
+    }
+  },
+  "summary": {
+    "documents": 1,
+    "blocking": 2,
+    "advisory": 1,
+    "bySeverity": {
+      "error": 2,
+      "warn": 1,
+      "info": 0
+    },
+    "verdicts": {
+      "VERIFIED": 7,
+      "INFERRED": 1,
+      "CONTRADICTED": 1,
+      "UNSOURCED": 1,
+      "EXTERNAL": 1
+    },
+    "exitCode": 1
+  },
+  "documents": [
+    {
+      "path": "article/spencer-mansion-runs-on-keys.md",
+      "id": "article-spencer-mansion-runs-on-keys",
+      "profile": "grounded",
+      "counts": {
+        "error": 2,
+        "warn": 1,
+        "info": 0,
+        "off": 0,
+        "blocking": 2,
+        "advisory": 1,
+        "total": 3
+      },
+      "stats": {
+        "spans": 11,
+        "grounded": 9
+      },
+      "findings": [
+        {
+          "id": "GT-GROU-001",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/spencer-mansion-runs-on-keys.md",
+          "line": 21,
+          "column": null,
+          "endLine": 21,
+          "message": "Contradicted: \"The Armor Key opens three doors\"",
+          "why": "A source you named disagrees with this claim. One of the two is wrong and the tool cannot tell which.",
+          "excerpt": "Four records under doors/ name the Armor Key as the opener: door-1f-02, door-1f-03, door-1f-05 and door-b1-01. Either the article is wrong or the note is. Open the game and decide.",
+          "evidence": null,
+          "data": {
+            "verdict": "CONTRADICTED",
+            "spanMap": "groundtruth/spans/article-spencer-mansion-runs-on-keys.mjs",
+            "spanIndex": 4
+          },
+          "fix": {
+            "kind": "decision",
+            "instruction": "A source disagrees with this claim. Read both and decide which is wrong. Note on file: Four records under doors/ name the Armor Key as the opener: door-1f-02, door-1f-03, door-1f-05 and door-b1-01. Either the article is wrong or the note is. Open the game and decide.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-002",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/spencer-mansion-runs-on-keys.md",
+          "line": 35,
+          "column": null,
+          "endLine": 35,
+          "message": "No source found: \"Most players finish a first run in about nine hours\"",
+          "why": "Nothing in the declared sources supports this claim. Either find a source or cut the sentence.",
+          "excerpt": "No measurement behind this. A completion-time aggregator would source it. Otherwise cut the number and keep the sentence about walking.",
+          "evidence": null,
+          "data": {
+            "verdict": "UNSOURCED",
+            "spanMap": "groundtruth/spans/article-spencer-mansion-runs-on-keys.mjs",
+            "spanIndex": 9
+          },
+          "fix": {
+            "kind": "source",
+            "instruction": "Find a source that says this, or cut the sentence. Do not mark it VERIFIED without a quote.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-003",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/spencer-mansion-runs-on-keys.md",
+          "line": 17,
+          "column": null,
+          "endLine": 17,
+          "message": "Inferred: \"There are more locked doors on the first floor than a single characte…\"",
+          "why": "This claim was computed rather than quoted, so the derivation is the thing a reader has to trust.",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "verdict": "INFERRED",
+            "spanMap": "groundtruth/spans/article-spencer-mansion-runs-on-keys.mjs",
+            "spanIndex": 2
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Check the derivation still holds against the current source records.",
+            "confidence": "low"
+          },
+          "docs": null
+        }
+      ]
+    }
+  ]
+}
