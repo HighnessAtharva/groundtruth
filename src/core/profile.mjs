@@ -36,7 +36,7 @@ export const BASE_PROFILE = {
 
 const MODULE_KEYS = ['grounding', 'readability', 'seo', 'style'];
 
-export function resolveProfiles(rawProfiles = {}) {
+export function resolveProfiles(rawProfiles = {}, { resolvePreset = (value) => value } = {}) {
   const resolved = new Map();
   const resolving = new Set();
 
@@ -53,7 +53,7 @@ export function resolveProfiles(rawProfiles = {}) {
     }
     resolving.add(name);
     const parent = raw.extends ? resolve(raw.extends, [...trail, name]) : BASE_PROFILE;
-    const merged = mergeProfile(parent, raw);
+    const merged = mergeProfile(parent, raw, resolvePreset);
     resolving.delete(name);
     resolved.set(name, merged);
     return merged;
@@ -63,7 +63,7 @@ export function resolveProfiles(rawProfiles = {}) {
   return Object.fromEntries(resolved);
 }
 
-function mergeProfile(parent, child) {
+function mergeProfile(parent, child, resolvePreset = (value) => value) {
   const out = { severity: { ...parent.severity, ...(child.severity || {}) } };
 
   for (const key of MODULE_KEYS) {
@@ -72,6 +72,8 @@ function mergeProfile(parent, child) {
     out[key] = {
       ...base,
       ...next,
+      // A preset may be named as a string, so a generated config needs no import.
+      preset: next.preset !== undefined ? resolvePreset(next.preset) : base.preset,
       // `overrides` merges one level deeper so a project can change a single
       // cost or a single threshold without restating the preset.
       overrides: mergeOneLevel(base.overrides || {}, next.overrides || {}),

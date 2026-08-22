@@ -141,13 +141,10 @@ export class AdapterRegistry {
         continue;
       }
       if (!wanted && !locked && !refresh) {
-        // No pin yet and no refresh asked for. A local folder or a table can pin
-        // itself with no network, so try, and fall back to unpinned.
-        try {
-          pins[adapter.id] = adapter.pin ? await adapter.pin() : unpinned(adapter);
-        } catch {
-          pins[adapter.id] = unpinned(adapter);
-        }
+        // No pin and nothing to compare it against, so there is no drift to
+        // detect and computing one is waste. The local adapter was hashing every
+        // file in the source folder on every check for nothing.
+        pins[adapter.id] = unpinned(adapter);
         continue;
       }
       if (locked) previous[adapter.id] = locked;

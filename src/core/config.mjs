@@ -15,6 +15,54 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ConfigError, assertSeverityOverrides } from './rules.mjs';
 import { resolveProfiles, BASE_PROFILE } from './profile.mjs';
+import { local } from '../adapters/local.mjs';
+import { git } from '../adapters/git.mjs';
+import { web } from '../adapters/web.mjs';
+import { records } from '../adapters/records.mjs';
+import { longform } from '../../presets/longform.mjs';
+import { shortform } from '../../presets/shortform.mjs';
+import neutral from '../../presets/neutral.mjs';
+import atharva from '../../presets/atharva.mjs';
+import ste from '../../presets/ste.mjs';
+
+// A generated config must not import anything. `init` runs before the package is
+// necessarily resolvable from the project, and a config that cannot load makes a
+// brand-new user's very first `check` fail with a module-resolution error. So a
+// built-in source can be declared as a plain object with a `type`, and a built-in
+// preset by name. A constructed adapter still works, which is what a custom one uses.
+const BUILT_IN_ADAPTERS = { local, git, web, records };
+const BUILT_IN_PRESETS = { longform, shortform, neutral, atharva, ste };
+
+function buildSource(entry, index) {
+  if (!entry || typeof entry !== 'object') {
+    throw new ConfigError(`sources[${index}] is not a source. Use { type: 'local', id: 'notes', root: './sources' } or a constructed adapter.`);
+  }
+  if (!entry.type) return entry;
+  const factory = BUILT_IN_ADAPTERS[entry.type];
+  if (!factory) {
+    throw new ConfigError(
+      `sources[${index}].type = '${entry.type}' is not a built-in source. `
+      + `One of: ${Object.keys(BUILT_IN_ADAPTERS).join(', ')}. `
+      + 'For anything else, import your own adapter and pass the object.',
+    );
+  }
+  return factory(entry);
+}
+
+/** A preset named as a string, or an object passed straight through. */
+export function resolvePreset(value, index) {
+  if (value == null || typeof value === 'object') return value;
+  const name = String(value);
+  const preset = BUILT_IN_PRESETS[name];
+  if (!preset) {
+    throw new ConfigError(
+      `'${name}' is not a built-in preset. One of: ${Object.keys(BUILT_IN_PRESETS).join(', ')}.`,
+    );
+  }
+  // `longform` and `shortform` are SEO threshold objects. The others are namespaces
+  // carrying a `readability` and a `style` half, so the caller picks.
+  return preset;
+}
 
 export const CONFIG_NAMES = ['groundtruth.config.mjs', 'groundtruth.config.js', '.groundtruthrc.mjs'];
 
@@ -119,7 +167,7 @@ export function normalizeConfig(raw, { configPath }) {
 
   let profiles;
   try {
-    profiles = resolveProfiles(rawProfiles);
+    profiles = resolveProfiles(rawProfiles, { resolvePreset });
   } catch (error) {
     throw error instanceof ConfigError ? error : new ConfigError(error.message);
   }
@@ -142,7 +190,7 @@ export function normalizeConfig(raw, { configPath }) {
 
   const defaultProfile = raw.defaultProfile || documents[documents.length - 1]?.profile || Object.keys(profiles)[0];
 
-  const sources = toArray(raw.sources, []);
+  const sources = toArray(raw.sources, []).map(buildSource);
   for (const [index, source] of sources.entries()) {
     if (!source || typeof source !== 'object') {
       problems.push(`sources[${index}] is not an adapter object`);
@@ -184,7 +232,12 @@ export function normalizeConfig(raw, { configPath }) {
       theme: raw.report?.theme || 'auto',
       showPassingChecks: raw.report?.showPassingChecks ?? false,
       indexSort: raw.report?.indexSort || 'risk',
-      inlineAssets: raw.report?.inlineAssets ?? true,
+      // 'auto' inlines the stylesheet and script into every page for a small
+      // corpus, where a single self-contained file is worth the duplication, and
+      // links shared files above the threshold, where it is not. 28KB duplicated
+      // into 200 pages is 5.6MB of boilerplate. The run prints which it chose.
+      assets: raw.report?.assets || 'auto',
+      inlineThreshold: raw.report?.inlineThreshold ?? 25,
     },
   };
 

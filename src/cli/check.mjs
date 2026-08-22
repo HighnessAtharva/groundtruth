@@ -81,6 +81,23 @@ export async function runCheck(argv) {
 
   const payload = buildPayload({ config, result, active, durationMs });
 
+  // --hook is the shape a Stop hook needs: silent on success, and on failure a
+  // message on stderr plus exit 2, which is what tells the harness to block.
+  if (flags.hook) {
+    if (!payload.summary.blocking) return 0;
+    const lines = [`groundtruth: ${pluralize(payload.summary.blocking, 'blocking finding')}. Fix these before finishing.`];
+    for (const document of payload.documents) {
+      for (const finding of document.findings) {
+        if (!finding.blocking) continue;
+        lines.push(`  ${finding.file}:${finding.line || 1}  ${finding.rule}  [${finding.fix?.kind || 'unknown'}]`);
+        lines.push(`      ${finding.message}`);
+        if (finding.fix?.instruction) lines.push(`      fix: ${finding.fix.instruction}`);
+      }
+    }
+    writeErr(lines.join('\n'));
+    return 2;
+  }
+
   if (flags.format === 'sarif') {
     writeOut(JSON.stringify(toSarif(payload, { root: config.root, rules: allRules() }), null, 2));
   } else if (flags.json) {

@@ -6,7 +6,7 @@
 import { page, escapeHtml } from './html.mjs';
 import { header, chip } from './build.mjs';
 
-export function renderIndex({ config, result, pages, css, js, active }) {
+export function renderIndex({ config, result, pages, active, shell }) {
   const ordered = [...pages].sort(sorterFor(config.report.indexSort));
 
   const totals = {
@@ -105,8 +105,7 @@ export function renderIndex({ config, result, pages, css, js, active }) {
 
   return page({
     title: `${config.report.title} — ${totals.documents} document${totals.documents === 1 ? '' : 's'}`,
-    css,
-    js,
+    ...shell,
     theme: config.report.theme,
     body,
   });

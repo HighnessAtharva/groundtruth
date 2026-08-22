@@ -33,7 +33,14 @@ export function jsonScript(id, data) {
   return `<script type="application/json" id="${escapeHtml(id)}">${encoded}</script>`;
 }
 
-export function page({ title, css, js, body, data = null, theme = 'auto' }) {
+/**
+ * @param {object} options
+ * @param {string|null} [options.cssHref]  link the stylesheet instead of inlining it
+ * @param {string|null} [options.jsSrc]    link the script instead of inlining it
+ */
+export function page({
+  title, css, js, body, data = null, theme = 'auto', cssHref = null, jsSrc = null,
+}) {
   return `<!doctype html>
 <html lang="en"${theme !== 'auto' ? ` data-theme="${escapeHtml(theme)}"` : ''}>
 <head>
@@ -48,12 +55,12 @@ try {
   if (stored === 'light' || stored === 'dark') document.documentElement.dataset.theme = stored;
 } catch (e) {}
 </script>
-<style>${css}</style>
+${cssHref ? `<link rel="stylesheet" href="${escapeHtml(cssHref)}">` : `<style>${css}</style>`}
 </head>
 <body>
 ${body}
 ${data ? jsonScript('gt-data', data) : ''}
-<script>${js}</script>
+${jsSrc ? `<script src="${escapeHtml(jsSrc)}"></script>` : `<script>${js}</script>`}
 </body>
 </html>
 `;

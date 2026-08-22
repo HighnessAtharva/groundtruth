@@ -53,7 +53,10 @@
     "test:offline": "node scripts/verify-examples.mjs --offline",
     "test:all": "npm test && npm run test:examples && npm run test:offline",
     "check": "node bin/groundtruth.mjs check",
-    "report": "node bin/groundtruth.mjs report"
+    "report": "node bin/groundtruth.mjs report",
+    "self": "node bin/groundtruth.mjs check --config .selfcheck.config.mjs",
+    "self:report": "node bin/groundtruth.mjs report --config .selfcheck.config.mjs",
+    "bench": "node scripts/bench.mjs"
   },
   "dependencies": {
     "yaml": "^2.5.1"

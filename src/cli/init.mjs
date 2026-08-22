@@ -60,6 +60,43 @@ export async function runInit(argv) {
     }
   }
 
+  if (flags['with-ci']) {
+    const workflow = path.join(root, '.github', 'workflows', 'groundtruth.yml');
+    if (!existsSync(workflow) || flags.force) {
+      mkdirSync(path.dirname(workflow), { recursive: true });
+      writeFileSync(workflow, WORKFLOW, 'utf8');
+      written.push(['.github/workflows/groundtruth.yml', '']);
+    } else {
+      skipped.push('.github/workflows/groundtruth.yml already exists');
+    }
+  }
+
+  if (flags['with-hooks']) {
+    const settingsPath = path.join(root, '.claude', 'settings.json');
+    mkdirSync(path.dirname(settingsPath), { recursive: true });
+    const settings = existsSync(settingsPath)
+      ? JSON.parse(readFileSync(settingsPath, 'utf8') || '{}')
+      : {};
+    settings.hooks ||= {};
+    const already = JSON.stringify(settings.hooks).includes('groundtruth');
+    if (already && !flags.force) {
+      skipped.push('.claude/settings.json already carries a groundtruth hook');
+    } else {
+      // Stop rather than PostToolUse. A gate on every edit of a long draft is noise,
+      // and a noisy hook gets deleted.
+      settings.hooks.Stop = [
+        ...(settings.hooks.Stop || []).filter((entry) =>
+          !JSON.stringify(entry).includes('groundtruth')),
+        {
+          matcher: '',
+          hooks: [{ type: 'command', command: STOP_HOOK, timeout: 60 }],
+        },
+      ];
+      writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+      written.push(['.claude/settings.json', 'Stop hook']);
+    }
+  }
+
   const gitignore = path.join(root, '.gitignore');
   const ignoreLine = '.groundtruth/';
   if (!existsSync(gitignore)) {
@@ -127,95 +164,103 @@ function safeDiscover(root, glob) {
   }
 }
 
+/**
+ * The generated config imports nothing.
+ *
+ * `init` runs before the package is necessarily resolvable from the project, and a
+ * config that cannot load makes a brand-new user's very first `check` fail with a
+ * module-resolution error. So a built-in source is a plain object with a `type` and
+ * a built-in preset is named as a string. Both are resolved by the loader.
+ */
 function renderConfig({ glob, modules }) {
   const on = (name) => modules.includes(name);
+  const L = [];
 
-  const lines = [
-    '// groundtruth configuration.',
-    '//',
-    '// Every default is written out below as a value or a comment, so this file is',
-    '// its own reference. Delete what you do not need.',
-    '//',
-    '// Paths resolve from this file\'s directory. Never hardcode an absolute path here.',
-    '',
-  ];
+  L.push('// groundtruth configuration.');
+  L.push('//');
+  L.push('// Every default is written out below as a value or a comment, so this file is');
+  L.push('// its own reference. Delete whatever you do not need.');
+  L.push('//');
+  L.push("// Paths resolve from this file's directory. Never hardcode an absolute path.");
+  L.push('//');
+  L.push('// Nothing is imported on purpose, so this file loads before anything is');
+  L.push('// installed. A built-in source is { type, ... } and a built-in preset is a');
+  L.push('// string. For a custom adapter, import it and pass the object.');
+  L.push('');
+  L.push('export default {');
 
   if (on('grounding')) {
-    lines.push("import { local } from 'groundtruth/adapters';", '');
+    L.push('  // Commit the lockfile. Gitignore the cache, or commit it to run offline.');
+    L.push("  lockfile: 'groundtruth.lock.json',");
+    L.push('');
+    L.push('  // Only read when a routed profile turns grounding on.');
+    L.push('  sources: [');
+    L.push('    // A folder of files you can quote from: notes, an offline docs export,');
+    L.push('    // fact sheets you wrote yourself.');
+    L.push("    { type: 'local', id: 'notes', root: './sources', include: ['**/*.md', '**/*.txt'] },");
+    L.push('');
+    L.push('    // A repository at a pinned commit. Plain HTTPS, no CLI, no token for a');
+    L.push('    // public repo. Run `groundtruth resolve --refresh` to pin it.');
+    L.push("    // { type: 'git', id: 'repo', repo: 'owner/name', ref: 'main' },");
+    L.push('');
+    L.push('    // A table of facts. A claim cites a cell, not a line.');
+    L.push("    // { type: 'records', id: 'specs', file: 'data/facts.csv', key: 'name' },");
+    L.push('');
+    L.push('    // A page that will change under you, captured to a committable snapshot.');
+    L.push("    // { type: 'web', id: 'web', snapshotDir: 'snapshots' },");
+    L.push('  ],');
+    L.push('');
   }
 
-  lines.push('export default {');
-  lines.push('  // Output. Both are gitignored by `init`.');
-  lines.push("  reportDir: '.groundtruth/report',");
-  lines.push("  cacheDir: '.groundtruth/cache',");
+  L.push('  // Every profile extends a base with all modules off, so turning one on is');
+  L.push('  // always an explicit act.');
+  L.push('  profiles: {');
+  L.push('    prose: {');
 
   if (on('grounding')) {
-    lines.push("  lockfile: 'groundtruth.lock.json', // commit this");
-    lines.push('');
-    lines.push('  // Data sources. Only read when a routed profile enables grounding.');
-    lines.push('  sources: [');
-    lines.push('    local({');
-    lines.push("      id: 'notes',");
-    lines.push("      root: './sources',      // a folder of files you can quote from");
-    lines.push("      include: ['**/*.md', '**/*.txt'],");
-    lines.push('    }),');
-    lines.push('    // git({ id: "repo", repo: "owner/name", ref: "main" }),');
-    lines.push('    // web({ id: "web", snapshotDir: ".groundtruth/snapshots" }),');
-    lines.push('    // records({ id: "specs", file: "data/facts.csv", key: "name" }),');
-    lines.push('  ],');
-  }
-
-  lines.push('');
-  lines.push('  // Profiles. Every profile extends a base with all modules off, so');
-  lines.push('  // turning one on is always explicit.');
-  lines.push('  profiles: {');
-  lines.push('    prose: {');
-
-  if (on('grounding')) {
-    lines.push('      grounding: {');
-    lines.push('        enabled: true,');
-    lines.push("        spanMaps: 'groundtruth/spans/${docId}.mjs',");
-    lines.push("        onDuplicateMatch: 'error', // 'error' | 'first'");
-    lines.push('        requireLocated: false,     // true = a quote the tool cannot find is an error');
-    lines.push('      },');
+    L.push('      grounding: {');
+    L.push('        enabled: true,');
+    L.push("        spanMaps: 'groundtruth/spans/${docId}.mjs',");
+    L.push("        onDuplicateMatch: 'error',   // 'error' | 'first'");
+    L.push('      },');
   }
 
   if (on('readability')) {
-    lines.push('      readability: {');
-    lines.push('        enabled: true,');
-    lines.push('        // overrides: { wordBudget: 22, hard: 18, tough: 8 },');
-    lines.push('        waiveQuotations: true,  // a blockquote is somebody else\'s words');
-    lines.push('        waiveCallouts: false,   // a callout is yours, so it is scored');
-    lines.push('        images: { enabled: true, requireAlt: true, requireFileExists: true },');
-    lines.push('        dialect: { enabled: false, target: \'american\' },');
-    lines.push('      },');
+    L.push('      readability: {');
+    L.push('        enabled: true,');
+    L.push('        // overrides: { wordBudget: 22, tough: 8, hard: 18 },');
+    L.push("        waiveQuotations: true,      // a blockquote is somebody else's words");
+    L.push('        waiveCallouts: false,      // a callout is yours, so it is scored');
+    L.push('        images: { enabled: true, requireAlt: true, requireFileExists: true },');
+    L.push('      },');
   }
 
   if (on('seo')) {
-    lines.push('      seo: {');
-    lines.push('        enabled: true,');
-    lines.push('        // overrides: { bodyWordsMin: 800, h2Max: 14 },');
-    lines.push("        keyword: { field: 'primary_keyword', secondaryField: 'secondary_keywords' },");
-    lines.push('      },');
+    L.push('      seo: {');
+    L.push('        enabled: true,');
+    L.push("        preset: 'longform',        // 'longform' | 'shortform'");
+    L.push('        // overrides: { bodyWordsMin: 900, h2Min: 5 },');
+    L.push("        keyword: { field: 'primary_keyword', secondaryField: 'secondary_keywords' },");
+    L.push('      },');
   }
 
-  lines.push('    },');
-  lines.push('  },');
-  lines.push('');
-  lines.push('  // Document routing. First match wins.');
-  lines.push('  documents: [');
-  lines.push(`    { include: ['${glob}'], exclude: ['node_modules/**', '.groundtruth/**'], profile: 'prose' },`);
-  lines.push('  ],');
-  lines.push('');
-  lines.push('  // Per-rule severity. off | info | warn | error. Only `error` blocks.');
-  lines.push('  // An advisory rule cannot be set to error, and the config will say so.');
-  lines.push('  severity: {');
-  lines.push('    // \'read.hard\': \'error\',');
-  lines.push('  },');
-  lines.push('};');
-  lines.push('');
+  L.push('    },');
+  L.push('  },');
+  L.push('');
+  L.push('  // Document routing. First match wins.');
+  L.push('  documents: [');
+  L.push(`    { include: ['${glob}'], exclude: ['node_modules/**'], profile: 'prose' },`);
+  L.push('  ],');
+  L.push('');
+  L.push('  // Per-rule severity. off | info | warn | error. Only error blocks, and an');
+  L.push('  // advisory rule cannot be set to error. Run `groundtruth explain` for the list.');
+  L.push('  severity: {');
+  L.push("    // 'read.hard': 'error',");
+  L.push('  },');
+  L.push('};');
+  L.push('');
 
-  return lines.join('\n');
+  return L.join('\n');
 }
 
 const SPAN_README = `# Span maps
@@ -254,6 +299,42 @@ Scaffold one from a document instead of writing it by hand:
 \`\`\`bash
 npx groundtruth draft docs/getting-started.md --write
 \`\`\`
+`;
+
+const STOP_HOOK = 'npx groundtruth check --changed --hook';
+
+const WORKFLOW = `name: groundtruth
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # --changed needs history to find a merge base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+
+      # --frozen refuses to verify against a revision the lockfile does not name.
+      - run: npx groundtruth check --changed --frozen
+
+      # Runs even when the gate failed, so a reviewer sees every finding inline.
+      - if: always()
+        run: npx groundtruth check --format sarif > groundtruth.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: groundtruth.sarif
+          category: groundtruth
 `;
 
 function renderAgents({ glob, modules }) {

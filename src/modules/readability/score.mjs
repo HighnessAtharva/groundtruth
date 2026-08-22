@@ -81,7 +81,10 @@ export function scoreSentence(raw, settings = NEUTRAL, signals = DEFAULT_SIGNALS
   const outside = series.outside || text;
   const nominals = countMatches(outside, signals.nominalization);
   const fillers = countMatches(outside, signals.filler);
-  const parens = (text.match(/[(]/g) || []).length;
+  // An aside opens after a space. `oklch(0.5 0.15 var(--h))` and `minmax(0, 68ch)`
+  // are function calls, and counting them charged a specification line eight asides
+  // it does not have. Found by running the scorer over this project's own docs.
+  const parens = (text.match(/(?:^|\s)\(/g) || []).length;
 
   // Proper nouns and hyphenated compounds are excluded. "Databricks" and
   // "auto-suspend" are long, but they are the names of the things being written

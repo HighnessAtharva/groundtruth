@@ -18,7 +18,7 @@ import { version } from '../version.mjs';
 const BOOLEAN = [
   'json', 'quiet', 'verbose', 'force', 'minimal', 'help', 'version', 'compact',
   'changed', 'frozen', 'fix-matches', 'open', 'refresh', 'offline', 'snapshot',
-  'update', 'write', 'all', 'with-hooks', 'with-ci', 'no-color',
+  'update', 'write', 'all', 'with-hooks', 'with-ci', 'no-color', 'hook', 'force',
 ];
 
 const ALIAS = { h: 'help', v: 'version', q: 'quiet', j: 'json', m: 'module' };

@@ -20,11 +20,14 @@ export async function runReport(argv) {
   const { outputs } = await pipeline.run({ only: positionals, config }, { upTo: 'findings.collect' });
   const result = outputs.get('findings.collect');
 
-  const { dir, indexPath, pages } = buildReport({ config, result, active });
+  const { dir, indexPath, pages, linked } = buildReport({ config, result, active });
 
   const counts = result.counts;
   writeOut('');
   writeOut(`  ${paint('wrote', 'green')}  ${pluralize(pages.length + 1, 'page')} to ${path.relative(process.cwd(), dir) || dir}`);
+  writeOut(`  ${paint(linked
+    ? 'shared report.css and report.js, because the corpus is large. Still no network.'
+    : 'each page is self-contained, so a single one can be shared on its own.', 'dim')}`);
   writeOut(`  ${pluralize(counts.error, 'error')} · ${pluralize(counts.warn, 'warning')}`);
   writeOut('');
   writeOut(`  ${paint(indexPath, 'cyan')}`);

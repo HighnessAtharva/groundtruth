@@ -181,3 +181,42 @@ test('the page script anchors to the first client rect, not the bounding box', (
   assert.ok(JS.includes('getClientRects()'), 'a wrapped sentence needs its first line, not its bounding box');
   assert.ok(JS.includes("event.key === 'Escape'"), 'keyboard reviewers exist');
 });
+
+test('the squeezer strips comments without touching a string literal', async () => {
+  const { squeezeCss, squeezeJs } = await import('../src/report/minify.mjs');
+  const css = squeezeCss('/* a note */ .x { content: "/* not a comment */"; color: red; }');
+  assert.ok(!css.includes('a note'), css);
+  assert.ok(css.includes('"/* not a comment */"'), css);
+  assert.ok(css.includes('color:red'), css);
+
+  const js = squeezeJs('// gone\nvar a = "// kept"; /* gone */ var b = 1;');
+  assert.ok(!js.includes('gone'), js);
+  assert.ok(js.includes('"// kept"'), js);
+});
+
+test('the squeezer leaves the real stylesheet parseable and smaller', async () => {
+  const { squeezeCss } = await import('../src/report/minify.mjs');
+  const squeezed = squeezeCss(CSS);
+  assert.ok(squeezed.length < CSS.length * 0.85, `only ${squeezed.length} of ${CSS.length}`);
+  // Brace balance is the cheapest proof that no rule was swallowed.
+  const open = (squeezed.match(/\{/g) || []).length;
+  const close = (squeezed.match(/\}/g) || []).length;
+  assert.equal(open, close);
+  assert.ok(squeezed.includes('oklch(var(--v-l)'), 'the verdict colour assembly must survive');
+});
+
+test('the squeezed script still parses', async () => {
+  const { squeezeJs } = await import('../src/report/minify.mjs');
+  assert.doesNotThrow(() => new Function(squeezeJs(JS)));
+});
+
+test('a linked page references local files and still fetches nothing remote', () => {
+  const html = page({
+    title: 'T', css: '', js: '', body: '<p>hi</p>',
+    cssHref: 'report.css', jsSrc: 'report.js',
+  });
+  assert.match(html, /<link rel="stylesheet" href="report\.css">/);
+  assert.match(html, /<script src="report\.js"><\/script>/);
+  // Linked is still offline. The guarantee that matters is no remote host.
+  assert.deepEqual(html.match(/(?:src|href)="https?:\/\/[^"]+"/g) || [], []);
+});

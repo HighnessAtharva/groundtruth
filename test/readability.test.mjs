@@ -147,3 +147,19 @@ test('the dominant reason is the fix that gets printed', () => {
   assert.equal(result.fix, result.parts[0].fix);
   assert.ok(result.parts[0].weight >= result.parts[result.parts.length - 1].weight);
 });
+
+test('a function call is not a parenthetical aside', () => {
+  // Found by running the scorer over this project's own docs, where a line of CSS
+  // values was charged eight asides it does not have.
+  const spec = 'Shared values: oklch(0.50 0.15 var(--h)) light, oklch(0.80 0.13 var(--h)) dark, and minmax(0, 68ch) for the column.';
+  const result = scorer.score(spec);
+  const reasons = result ? result.reasons.join(' ') : '';
+  assert.ok(!reasons.includes('aside'), reasons);
+});
+
+test('a real aside is still counted', () => {
+  const sentence = 'The queue drains slowly (about once a second) and the buffer fills (usually within a minute) after that.';
+  const result = makeScorer({ tough: 3 }).score(sentence);
+  assert.ok(result, 'expected a finding');
+  assert.ok(result.reasons.some((reason) => reason.includes('asides in parentheses')), result.reasons.join('; '));
+});

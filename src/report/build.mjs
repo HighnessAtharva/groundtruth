@@ -10,11 +10,31 @@ import { page, escapeHtml, attrs } from './html.mjs';
 import { renderDocumentBody, slug } from './render-doc.mjs';
 import { renderIndex } from './render-index.mjs';
 import { makeScorer, BAND_LABEL } from '../modules/readability/score.mjs';
+import { squeezeCss, squeezeJs } from './minify.mjs';
 
 export function buildReport({ config, result, active }) {
   const dir = config.reportDir;
   if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
+
+  const css = squeezeCss(CSS);
+  const js = squeezeJs(JS);
+
+  // A single self-contained file is worth the duplication for a handful of pages
+  // and not worth 5.6MB of boilerplate for two hundred. The choice is reported so
+  // it is a decision rather than a surprise.
+  const total = result.documents.length + 1;
+  const linked = config.report.assets === 'linked'
+    || (config.report.assets === 'auto' && total > config.report.inlineThreshold);
+
+  if (linked) {
+    writeFileSync(path.join(dir, 'report.css'), css, 'utf8');
+    writeFileSync(path.join(dir, 'report.js'), js, 'utf8');
+  }
+
+  const shell = linked
+    ? { css: '', js: '', cssHref: 'report.css', jsSrc: 'report.js' }
+    : { css, js, cssHref: null, jsSrc: null };
 
   const pages = [];
 
@@ -24,6 +44,7 @@ export function buildReport({ config, result, active }) {
       entry,
       config,
       active,
+      shell,
       previous: result.documents[index - 1],
       next: result.documents[index + 1],
       previousHref: result.documents[index - 1] ? `${slug(result.documents[index - 1].id)}.html` : null,
@@ -35,14 +56,14 @@ export function buildReport({ config, result, active }) {
 
   writeFileSync(
     path.join(dir, 'index.html'),
-    renderIndex({ config, result, pages, css: CSS, js: JS, active }),
+    renderIndex({ config, result, pages, active, shell }),
     'utf8',
   );
 
-  return { dir, indexPath: path.join(dir, 'index.html'), pages };
+  return { dir, indexPath: path.join(dir, 'index.html'), pages, linked };
 }
 
-function buildDocumentPage({ entry, config, active, previousHref, nextHref }) {
+function buildDocumentPage({ entry, config, active, shell, previousHref, nextHref }) {
   const doc = entry.doc;
   const annotationsByBlock = new Map();
   const spanData = {};
@@ -118,8 +139,7 @@ function buildDocumentPage({ entry, config, active, previousHref, nextHref }) {
 
   const html = page({
     title: `${title} — groundtruth`,
-    css: CSS,
-    js: JS,
+    ...shell,
     theme: config.report.theme,
     data: {
       spans: spanData,
