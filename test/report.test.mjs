@@ -51,8 +51,8 @@ test('a mark carries its verdict hue, so two verdicts never look alike', () => {
     { match: 'Alpha is true', verdict: 'VERIFIED' },
     { match: 'Beta is false', verdict: 'CONTRADICTED' },
   ]);
-  assert.match(html, /gt-v-verified" style="--h:158"/);
-  assert.match(html, /gt-v-contradicted gt-emphatic" style="--h:350"/);
+  assert.match(html, /gt-v-verified" style="--h:152"/);
+  assert.match(html, /gt-v-contradicted gt-emphatic" style="--h:10"/);
 });
 
 test('an emphatic verdict gets the emphatic class and a clean one does not', () => {
@@ -142,7 +142,7 @@ test('the stylesheet defines every colour on bare :root, not only inside a media
   // A colour whose only definition sits inside a media block borrows the host
   // theme when the viewer has no explicit preference.
   const rootBlock = CSS.slice(CSS.indexOf(':root {'), CSS.indexOf('@media'));
-  for (const token of ['--bg', '--surface', '--border', '--text', '--accent', '--error', '--warn', '--ok']) {
+  for (const token of ['--paper', '--surface', '--rule', '--ink', '--accent', '--bad', '--mid', '--good']) {
     assert.ok(rootBlock.includes(`${token}:`), `${token} is not defined on bare :root`);
   }
 });
@@ -155,16 +155,27 @@ test('the stylesheet never hides a horizontal overflow bug on the root', () => {
 });
 
 test('the hover cue never uses filter, which would trap the card z-index', () => {
-  const hover = CSS.slice(CSS.indexOf('.gt-span:hover'), CSS.indexOf('.gt-read'));
-  assert.ok(!hover.includes('filter'), 'a filter creates a stacking context and traps the card');
-  assert.ok(hover.includes('z-index'));
+  const hover = ruleBody('.gt-span:hover, .gt-span:focus-visible');
+  assert.ok(!/filter\s*:/.test(hover), 'a filter creates a stacking context and traps the card');
+  assert.ok(hover.includes('z-index'), hover);
 });
 
 test('the card is fixed, because an overflow ancestor clips an absolute descendant', () => {
-  const card = CSS.slice(CSS.indexOf('.gt-card {'), CSS.indexOf('.gt-card-verdict'));
+  const card = ruleBody('.gt-card');
   assert.match(card, /position:\s*fixed/);
-  assert.match(card, /width:\s*min\(380px, calc\(100vw - 24px\)\)/);
+  // Clamped to the viewport, so a mark near the right edge still shows its card.
+  assert.match(card, /width:\s*min\(\d+px,\s*calc\(100vw - \d+px\)\)/);
 });
+
+/** The declarations of exactly one rule, by selector, without slicing guesses. */
+function ruleBody(selector) {
+  const at = CSS.indexOf(`
+${selector} {`);
+  assert.ok(at !== -1, `rule not found: ${selector}`);
+  const open = CSS.indexOf('{', at);
+  const close = CSS.indexOf('}', open);
+  return CSS.slice(open + 1, close);
+}
 
 test('the page script anchors to the first client rect, not the bounding box', () => {
   assert.ok(JS.includes('getClientRects()'), 'a wrapped sentence needs its first line, not its bounding box');

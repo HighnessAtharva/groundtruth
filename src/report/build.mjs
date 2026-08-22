@@ -197,12 +197,13 @@ function rail({ entry, audit, config, verdictsInUse, spanData }) {
   const parts = [];
 
   if (verdictsInUse.length) {
-    parts.push(panel('Verdicts', tally(spanData).total, [
+    const total = Object.keys(spanData).length;
+    parts.push(panel('Claims', total, [
       '<div class="gt-legend">',
       verdictsInUse
         .map(([name, spec]) => {
           const count = Object.values(spanData).filter((span) => span.verdict === name).length;
-          return `<span class="gt-legend-item" style="--h:${spec.hue ?? 210}">${escapeHtml(spec.label || name)} ${count}</span>`;
+          return `<span class="gt-legend-item" style="--h:${spec.hue ?? 262}">${escapeHtml(spec.label || name)}<b>${count}</b></span>`;
         })
         .join(''),
       '</div>',
@@ -211,10 +212,10 @@ function rail({ entry, audit, config, verdictsInUse, spanData }) {
 
   if (audit) {
     parts.push(panel(
-      'SEO and AEO',
+      'Search and answer engines',
       `${audit.counts.pass}/${audit.counts.total}`,
       [
-        `<div class="gt-score gt-score-${audit.band}">${audit.score}<span style="font-size:12px;font-weight:500;color:var(--text-faint)"> / 100 advisory</span></div>`,
+        `<div class="gt-score gt-score-${audit.band}">${audit.score}<span> / 100, advisory</span></div>`,
         ...audit.groups.map((group) => checkGroup(group, config.report.showPassingChecks)),
       ].join(''),
       true,
@@ -222,25 +223,27 @@ function rail({ entry, audit, config, verdictsInUse, spanData }) {
   }
 
   const findings = entry.findings.filter((finding) => finding.severity !== 'off');
+  const glyph = { error: '✕', warn: '!', info: 'i' };
   parts.push(panel(
     'Findings',
-    `${entry.counts.error}E ${entry.counts.warn}W`,
+    findings.length ? `${entry.counts.error} blocking, ${entry.counts.warn} advisory` : 'none',
     findings.length
-      ? `<ul class="gt-findings">${findings.map(finding => `
-        <li class="gt-finding gt-finding-${escapeHtml(finding.severity)}">
-          <div class="gt-finding-rule">${escapeHtml(finding.rule)}${finding.line ? ` · line ${finding.line}` : ''}${finding.blocking ? ' · blocking' : ''}</div>
-          <div class="gt-finding-msg">${escapeHtml(finding.message)}</div>
-          ${finding.fix?.instruction ? `<div class="gt-finding-fix">${escapeHtml(finding.fix.instruction)}</div>` : ''}
-        </li>`).join('')}</ul>`
-      : '<p class="gt-zero">Nothing to report.</p>',
+      ? `<ul class="gt-findings">${findings.map((finding) => [
+        `<li class="gt-finding gt-finding-${escapeHtml(finding.severity)}">`,
+        '<div class="gt-finding-head">',
+        `<span class="gt-finding-glyph">${glyph[finding.severity] || '·'}</span>`,
+        `<span>${escapeHtml(finding.rule)}${finding.line ? ` · line ${finding.line}` : ''}</span>`,
+        finding.blocking ? '<span class="gt-finding-blocking">blocking</span>' : '',
+        '</div>',
+        `<div class="gt-finding-msg">${escapeHtml(finding.message)}</div>`,
+        finding.fix?.instruction ? `<div class="gt-finding-fix">${escapeHtml(finding.fix.instruction)}</div>` : '',
+        '</li>',
+      ].join('')).join('')}</ul>`
+      : '<p class="gt-check-detail">Nothing to report.</p>',
     true,
   ));
 
   return parts.join('');
-}
-
-function tally(spanData) {
-  return { total: Object.keys(spanData).length };
 }
 
 function panel(title, count, body, open = false) {
@@ -252,13 +255,13 @@ function panel(title, count, body, open = false) {
   ].join('');
 }
 
-const GLYPH = { pass: '✓', warn: '!', fail: '✗' };
+const GLYPH = { pass: '✓', warn: '!', fail: '✕' };
 
 function checkGroup(group, showPassing) {
   const visible = group.checks.filter((check) => showPassing || check.status !== 'pass');
   if (!visible.length) return '';
   return [
-    `<div class="gt-card-label" style="margin-top:10px">${escapeHtml(group.label)}</div>`,
+    `<div class="gt-group-label">${escapeHtml(group.label)}</div>`,
     '<ul class="gt-checks">',
     visible
       .map((check) => [

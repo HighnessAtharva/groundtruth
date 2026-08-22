@@ -5,8 +5,8 @@
     "version": "0.1.0"
   },
   "run": {
-    "startedAt": "2026-08-22T12:59:14.955Z",
-    "durationMs": 47,
+    "startedAt": "2026-08-22T14:35:38.376Z",
+    "durationMs": 137,
     "configPath": "D:\\Atharva\\groundtruth\\examples\\resident-evil\\groundtruth.config.mjs",
     "modules": {
       "grounding": true,

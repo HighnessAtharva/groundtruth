@@ -15,70 +15,139 @@ try {
 <style>
 :root {
   color-scheme: light dark;
-  --bg: #fbfbfa;
-  --surface: #ffffff;
-  --surface-2: #f4f4f2;
-  --border: #e2e2dd;
-  --border-strong: #c9c9c2;
-  --text: #1d1d1b;
-  --text-dim: #6b6b64;
-  --text-faint: #98988f;
-  --accent: #2f4bd6;
-  --accent-soft: #e8ecfb;
-  --error: #c02626;
-  --warn: #a86b00;
-  --info: #2f4bd6;
-  --ok: #12795a;
-  --shadow: 0 6px 24px rgba(18, 18, 16, 0.14), 0 1px 2px rgba(18, 18, 16, 0.08);
+
+  /* Solved, not eyeballed. test/contrast.test.mjs recomputes every ratio from
+     these values, so a token that stops clearing its threshold fails the suite
+     rather than shipping. Each colour is also fitted to the sRGB gamut, because a
+     clipped colour renders as a different hue than the one that was chosen and
+     two verdicts can silently converge.
+
+     Scalars, never a composed colour, for --v-*. A custom property containing
+     var(--h) resolves it against the element it is DECLARED on, which here is
+     :root where --h is unset, so every verdict collapsed onto one hue. The
+     oklch() is assembled at each point of use instead. */
+  --paper: #fdfbf8;
+  --paper: oklch(0.988 0.004 75);
+  --surface: #f5f3f0;
+  --surface: oklch(0.965 0.005 75);
+  --surface-2: #edeae6;
+  --surface-2: oklch(0.938 0.006 75);
+  --ink: #28231e;
+  --ink: oklch(0.26 0.012 70);
+  --ink-2: #5c5751;
+  --ink-2: oklch(0.46 0.012 70);
+  --ink-3: #746f69;
+  --ink-3: oklch(0.545 0.011 70);
+  --rule: #e1ddda;
+  --rule: oklch(0.9 0.006 70);
+  --rule-2: #c7c3bf;
+  --rule-2: oklch(0.82 0.008 70);
+  --accent: #0067c8;
+  --accent: oklch(0.52 0.171 255);
+  --good: #0d7a3e;
+  --good: oklch(0.51 0.13 152);
+  --mid: #9b610e;
+  --mid: oklch(0.545 0.115 68);
+  --bad: #a92324;
+  --bad: oklch(0.48 0.17 26);
+  --hard: #a92324;
+  --hard: oklch(0.48 0.17 26);
+  --tough: #807100;
+  --tough: oklch(0.545 0.114 100);
+
+  --v-l: 0.615;
+  --v-c: 0.104;
+  --v-wash-l: 0.92;
+  --v-wash-c: 0.04;
+  --v-edge-l: 0.72;
+  --v-edge-c: 0.09;
+
+  --shadow: 0 1px 2px oklch(0.26 0.012 70 / 0.06), 0 8px 28px oklch(0.26 0.012 70 / 0.11);
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --wash-l: 92%;
-  --wash-s: 74%;
-  --ink-l: 34%;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16161a;
-    --surface: #1d1d22;
-    --surface-2: #24242a;
-    --border: #33333c;
-    --border-strong: #4a4a56;
-    --text: #ececef;
-    --text-dim: #a3a3ad;
-    --text-faint: #75757f;
-    --accent: #8fa4ff;
-    --accent-soft: #23273d;
-    --error: #ff8080;
-    --warn: #e8b062;
-    --info: #8fa4ff;
-    --ok: #5fd1ac;
-    --shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
-    --wash-l: 24%;
-    --wash-s: 52%;
-    --ink-l: 74%;
+    --paper: #121417;
+    --paper: oklch(0.19 0.008 265);
+    --surface: #1c1e22;
+    --surface: oklch(0.235 0.009 265);
+    --surface-2: #25282d;
+    --surface-2: oklch(0.275 0.01 265);
+    --ink: #eae7e3;
+    --ink: oklch(0.93 0.006 80);
+    --ink-2: #b2afaa;
+    --ink-2: oklch(0.755 0.008 80);
+    --ink-3: #85817a;
+    --ink-3: oklch(0.605 0.011 80);
+    --rule: #2e3036;
+    --rule: oklch(0.31 0.01 265);
+    --rule-2: #44484e;
+    --rule-2: oklch(0.4 0.012 265);
+    --accent: #76b2ff;
+    --accent: oklch(0.755 0.127 255);
+    --good: #62d286;
+    --good: oklch(0.78 0.15 152);
+    --mid: #f9a63e;
+    --mid: oklch(0.79 0.15 68);
+    --bad: #ff877e;
+    --bad: oklch(0.755 0.147 26);
+    --hard: #ff877e;
+    --hard: oklch(0.755 0.147 26);
+    --tough: #dbc63f;
+    --tough: oklch(0.82 0.15 100);
+
+    --v-l: 0.76;
+    --v-c: 0.128;
+    --v-wash-l: 0.345;
+    --v-wash-c: 0.06;
+    --v-edge-l: 0.5;
+    --v-edge-c: 0.1;
+
+    --shadow: 0 1px 2px oklch(0 0 0 / 0.5), 0 12px 34px oklch(0 0 0 / 0.45);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #16161a;
-  --surface: #1d1d22;
-  --surface-2: #24242a;
-  --border: #33333c;
-  --border-strong: #4a4a56;
-  --text: #ececef;
-  --text-dim: #a3a3ad;
-  --text-faint: #75757f;
-  --accent: #8fa4ff;
-  --accent-soft: #23273d;
-  --error: #ff8080;
-  --warn: #e8b062;
-  --info: #8fa4ff;
-  --ok: #5fd1ac;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
-  --wash-l: 24%;
-  --wash-s: 52%;
-  --ink-l: 74%;
+  --paper: #121417;
+  --paper: oklch(0.19 0.008 265);
+  --surface: #1c1e22;
+  --surface: oklch(0.235 0.009 265);
+  --surface-2: #25282d;
+  --surface-2: oklch(0.275 0.01 265);
+  --ink: #eae7e3;
+  --ink: oklch(0.93 0.006 80);
+  --ink-2: #b2afaa;
+  --ink-2: oklch(0.755 0.008 80);
+  --ink-3: #85817a;
+  --ink-3: oklch(0.605 0.011 80);
+  --rule: #2e3036;
+  --rule: oklch(0.31 0.01 265);
+  --rule-2: #44484e;
+  --rule-2: oklch(0.4 0.012 265);
+  --accent: #76b2ff;
+  --accent: oklch(0.755 0.127 255);
+  --good: #62d286;
+  --good: oklch(0.78 0.15 152);
+  --mid: #f9a63e;
+  --mid: oklch(0.79 0.15 68);
+  --bad: #ff877e;
+  --bad: oklch(0.755 0.147 26);
+  --hard: #ff877e;
+  --hard: oklch(0.755 0.147 26);
+  --tough: #dbc63f;
+  --tough: oklch(0.82 0.15 100);
+
+  --v-l: 0.76;
+  --v-c: 0.128;
+  --v-wash-l: 0.345;
+  --v-wash-c: 0.06;
+  --v-edge-l: 0.5;
+  --v-edge-c: 0.1;
+
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.5), 0 12px 34px oklch(0 0 0 / 0.45);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -87,16 +156,24 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover { text-decoration-thickness: 2px; }
 
 img, svg, video, canvas { max-width: 100%; height: auto; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
 
@@ -104,352 +181,576 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(8px);
-  border-bottom: 1px solid var(--border);
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
 }
 
 .gt-header-inner {
-  max-width: 1180px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 10px 20px;
+  padding: 12px 28px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
-  align-items: center;
+  gap: 8px 18px;
+  align-items: baseline;
 }
 
-.gt-brand {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-size: 15px;
-  margin-right: 4px;
-}
-.gt-brand a { color: var(--text); text-decoration: none; }
+.gt-brand { font-size: 14px; font-weight: 680; letter-spacing: -0.015em; }
+.gt-brand a { color: var(--ink); text-decoration: none; }
+.gt-brand a:hover { color: var(--accent); }
 
-.gt-crumb { color: var(--text-dim); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
-
-.gt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
-
-.gt-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.gt-crumb {
+  color: var(--ink-3);
+  font-family: var(--mono);
   font-size: 12px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  color: var(--text-dim);
-  text-decoration: none;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.gt-chip b { color: var(--text); font-variant-numeric: tabular-nums; }
-.gt-chip-error { border-color: var(--error); color: var(--error); }
-.gt-chip-warn { border-color: var(--warn); color: var(--warn); }
-.gt-chip-ok { border-color: var(--ok); color: var(--ok); }
+
+.gt-chips { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-left: auto; align-items: baseline; }
+
+/* A label and a figure, set as type. A row of bordered capsules is the
+   metric-tile reflex and it competes with the prose for attention. */
+.gt-chip { font-size: 12px; color: var(--ink-3); white-space: nowrap; text-decoration: none; }
+.gt-chip b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 660;
+  margin-left: 3px;
+}
+.gt-chip-error b { color: var(--bad); }
+.gt-chip-warn b { color: var(--mid); }
+.gt-chip-ok b { color: var(--good); }
+a.gt-chip:hover { color: var(--accent); }
 
 .gt-theme {
   font: inherit;
   font-size: 12px;
   cursor: pointer;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  color: var(--text-dim);
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule-2);
+  background: none;
+  color: var(--ink-3);
+  transition: color 140ms var(--ease), border-color 140ms var(--ease);
 }
+.gt-theme:hover { color: var(--ink); border-bottom-color: var(--ink-2); }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 
 .gt-main {
-  max-width: 1180px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 24px 20px 96px;
+  padding: 40px 28px 120px;
   display: grid;
-  /* minmax(0, ...) rather than 1fr: 1fr has an auto minimum, and one wide table
-     then pushes the whole grid sideways. */
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 32px;
+  /* minmax(0, ...) and never 1fr. 1fr has an auto minimum, so one wide table
+     pushes the whole grid sideways. */
+  grid-template-columns: minmax(0, 68ch) minmax(0, 300px);
+  gap: 56px;
   align-items: start;
 }
 
-@media (max-width: 940px) {
-  .gt-main { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (max-width: 960px) {
+  .gt-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 24px 20px 80px;
+  }
   .gt-rail { order: -1; position: static !important; }
+  .gt-header-inner { padding: 10px 20px; }
+  .gt-index, .gt-foot { padding-left: 20px; padding-right: 20px; }
 }
 
 .gt-prose { min-width: 0; overflow-wrap: anywhere; }
 .gt-prose > :first-child { margin-top: 0; }
 
-.gt-prose h1 { font-size: 1.85rem; line-height: 1.2; letter-spacing: -0.02em; margin: 2rem 0 0.6rem; }
-.gt-prose h2 { font-size: 1.35rem; line-height: 1.25; margin: 2.2rem 0 0.5rem; }
-.gt-prose h3 { font-size: 1.1rem; margin: 1.6rem 0 0.4rem; }
-.gt-prose h4, .gt-prose h5, .gt-prose h6 { font-size: 1rem; margin: 1.3rem 0 0.3rem; }
-.gt-prose p { margin: 0 0 1rem; }
-.gt-prose li { margin: 0.25rem 0; }
-.gt-prose hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
-
-.gt-prose blockquote {
-  margin: 1rem 0;
-  padding: 0.2rem 0 0.2rem 1rem;
-  border-left: 3px solid var(--border-strong);
-  color: var(--text-dim);
+.gt-prose h1 {
+  font-size: 2.1rem;
+  line-height: 1.15;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+  margin: 0 0 1.4rem;
+  text-wrap: balance;
 }
+.gt-prose h2 {
+  font-size: 1.6rem;
+  line-height: 1.2;
+  font-weight: 680;
+  letter-spacing: -0.018em;
+  margin: 2.8rem 0 0.8rem;
+  text-wrap: balance;
+}
+.gt-prose h3 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+  margin: 2rem 0 0.5rem;
+}
+.gt-prose h4, .gt-prose h5, .gt-prose h6 {
+  font-size: 1rem;
+  font-weight: 660;
+  margin: 1.6rem 0 0.4rem;
+}
+.gt-prose p { margin: 0 0 1.15rem; }
+.gt-prose ul, .gt-prose ol { margin: 0 0 1.15rem; padding-left: 1.4rem; }
+.gt-prose li { margin: 0.3rem 0; }
+.gt-prose li > ul, .gt-prose li > ol { margin: 0.3rem 0; }
+.gt-prose hr { border: 0; border-top: 1px solid var(--rule); margin: 2.6rem 0; }
 
+/* A blockquote rule is the typographic mark of quotation, not a decorative
+   accent, so it stays at 1px and neutral. */
+.gt-prose blockquote {
+  margin: 1.4rem 0;
+  padding: 0 0 0 1.15rem;
+  border-left: 1px solid var(--rule-2);
+  color: var(--ink-2);
+  font-style: italic;
+}
+.gt-prose blockquote > :last-child { margin-bottom: 0; }
+
+/* A full-bordered block with a tint and a set label. No side stripe. */
 .gt-callout {
-  margin: 1.2rem 0;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 6px;
+  margin: 1.6rem 0;
+  padding: 14px 16px 2px;
+  border: 1px solid var(--rule-2);
+  border-radius: 3px;
   background: var(--surface);
 }
 .gt-callout-kind {
-  margin: 0 0 6px !important;
+  margin: 0 0 8px !important;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--accent);
+  font-weight: 680;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
-.gt-callout > :last-child { margin-bottom: 0 !important; }
+.gt-callout > :last-child { margin-bottom: 14px !important; }
 
 .gt-prose code {
   font-family: var(--mono);
-  font-size: 0.87em;
+  font-size: 0.855em;
   background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.1em 0.32em;
+  border-radius: 3px;
+  padding: 0.12em 0.34em;
 }
 
 .gt-prose pre {
   margin: 0;
-  padding: 12px 14px;
+  padding: 14px 16px;
   font-family: var(--mono);
   font-size: 13px;
-  line-height: 1.5;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  line-height: 1.55;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
 }
-.gt-prose pre code { background: none; border: 0; padding: 0; font-size: inherit; }
-.gt-prose pre code.gt-untagged { border-left: 2px solid var(--warn); padding-left: 8px; }
+.gt-prose pre code { background: none; padding: 0; font-size: inherit; }
+
+/* An untagged fence gets a full tinted border, never a side stripe. */
+.gt-untagged-fence pre { border-color: var(--tough); }
 
 /* Wide content scrolls inside its own box. The page body never does. */
-.gt-scroll { overflow-x: auto; margin: 1.2rem 0; max-width: 100%; }
+.gt-scroll { overflow-x: auto; margin: 1.6rem 0; max-width: 100%; }
 .gt-scroll pre { overflow-x: visible; }
 
-.gt-prose table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
+.gt-prose table {
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
 .gt-prose th, .gt-prose td {
-  border: 1px solid var(--border);
-  padding: 7px 11px;
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 16px 8px 0;
   text-align: left;
   vertical-align: top;
 }
-.gt-prose th { background: var(--surface-2); font-weight: 650; }
+.gt-prose th {
+  font-size: 11.5px;
+  font-weight: 680;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom-color: var(--rule-2);
+}
+.gt-prose tbody tr:last-child td { border-bottom: 0; }
 
-.gt-figure { margin: 1.4rem 0; }
-.gt-figure img { border: 1px solid var(--border); border-radius: 8px; display: block; }
-.gt-figure figcaption { font-size: 12.5px; color: var(--text-faint); margin-top: 6px; }
-.gt-raw-html { color: var(--text-faint); font-size: 12px; }
-.gt-fn { color: var(--text-faint); }
+.gt-figure { margin: 2rem 0; }
+.gt-figure img { border: 1px solid var(--rule); border-radius: 3px; display: block; }
+.gt-figure figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.5; }
+.gt-raw-html { color: var(--ink-3); font-size: 12px; }
+.gt-fn { color: var(--ink-3); font-size: 11px; }
 
 /* ── Marks ──────────────────────────────────────────────────────────────── */
 
+/* Underline first. A wash on every bound claim is a wall of highlighter, and on
+   a page with forty of them the prose stops being readable. */
 .gt-span {
-  --h: 210;
-  background: hsl(var(--h) var(--wash-s) var(--wash-l));
+  background: none;
   color: inherit;
-  border-bottom: 2px solid hsl(var(--h) 70% var(--ink-l));
-  border-radius: 2px;
-  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-bottom: 2px solid oklch(var(--v-l) var(--v-c) var(--h, 262));
+  padding-bottom: 1px;
   cursor: help;
-  /* Never filter here. It creates a stacking context and traps the card. */
-  transition: background 120ms ease;
+  transition: background-color 140ms var(--ease);
 }
 .gt-span:hover, .gt-span:focus-visible {
-  background: hsl(var(--h) var(--wash-s) calc(var(--wash-l) - 6%));
-  outline: none;
+  background: oklch(var(--v-wash-l) var(--v-wash-c) var(--h, 262));
+  /* Never a filter here. It creates a stacking context and traps the card. */
   position: relative;
   z-index: 60;
 }
+
+/* A wash only when the verdict blocks. Inverting the emphasis makes the two real
+   problems more visible, because they stop competing with the ones that are fine. */
 .gt-span.gt-emphatic {
-  font-weight: 650;
-  box-shadow: 0 0 0 2px hsl(var(--h) 70% var(--ink-l) / 0.35);
+  background: oklch(var(--v-wash-l) var(--v-wash-c) var(--h, 262));
+  box-shadow: inset 0 0 0 1px oklch(var(--v-edge-l) var(--v-edge-c) var(--h, 262));
+  border-radius: 2px;
+  padding: 0.05em 0.22em 1px;
+  font-weight: 560;
+}
+.gt-span.gt-emphatic:hover, .gt-span.gt-emphatic:focus-visible {
+  box-shadow: inset 0 0 0 1px oklch(var(--v-l) var(--v-c) var(--h, 262));
 }
 
+/* Dotted, so a hard sentence and a cited sentence never read as the same kind of
+   thing. A sentence that is both nests, the citation rule under the dotted one. */
 .gt-read {
-  text-decoration: underline dotted 2px hsl(38 80% var(--ink-l));
-  text-underline-offset: 4px;
+  text-decoration: underline dotted 2px var(--tough);
+  text-underline-offset: 5px;
   cursor: help;
 }
-.gt-read.gt-band-hard { text-decoration-color: hsl(4 74% var(--ink-l)); }
-.gt-read:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gt-read.gt-band-hard { text-decoration-color: var(--hard); }
 
 /* ── Hover card ─────────────────────────────────────────────────────────── */
 
 .gt-card {
   position: fixed;
   z-index: 200;
-  width: min(380px, calc(100vw - 24px));
-  max-height: min(60vh, 460px);
+  width: min(370px, calc(100vw - 24px));
+  max-height: min(58vh, 440px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: none;
-  padding: 12px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid var(--rule-2);
+  border-radius: 4px;
   box-shadow: var(--shadow);
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .gt-card[data-open="1"] { display: block; }
+
 .gt-card-verdict {
-  display: inline-block;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 2px 8px;
-  border-radius: 999px;
-  margin-bottom: 8px;
-  background: hsl(var(--h, 210) var(--wash-s) var(--wash-l));
-  color: hsl(var(--h, 210) 70% var(--ink-l));
-  border: 1px solid hsl(var(--h, 210) 60% var(--ink-l) / 0.5);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: oklch(var(--v-l) var(--v-c) var(--h, 262));
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
 }
-.gt-card-row { margin: 6px 0; }
-.gt-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); }
+.gt-card-verdict::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: oklch(var(--v-l) var(--v-c) var(--h, 262));
+  flex: none;
+}
+
+.gt-card-row { margin: 10px 0; }
+.gt-card-row:last-of-type { margin-bottom: 0; }
+.gt-card-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 680;
+  color: var(--ink-3);
+  margin-bottom: 3px;
+}
+/* A full-bordered tinted block, not a side stripe. */
 .gt-card-quote {
-  margin: 6px 0;
-  padding: 8px 10px;
-  background: var(--surface-2);
-  border-left: 3px solid var(--border-strong);
-  border-radius: 4px;
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  color: var(--ink);
 }
-.gt-card-note { color: var(--text-dim); }
-.gt-card-src { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
-.gt-card-warn { color: var(--warn); font-size: 12px; }
-.gt-card-hint { color: var(--text-faint); font-size: 11px; margin-top: 8px; }
-.gt-card ul { margin: 6px 0; padding-left: 18px; }
-.gt-card-fix { color: var(--ok); }
-
-/* ── Rail ───────────────────────────────────────────────────────────────── */
-
-.gt-rail { position: sticky; top: 64px; min-width: 0; display: grid; gap: 14px; }
-
-.gt-panel {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  overflow: hidden;
+.gt-card-note { color: var(--ink-2); }
+.gt-card-src { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+.gt-card-warn { color: var(--mid); font-size: 12px; margin: 8px 0; }
+.gt-card-hint {
+  color: var(--ink-3);
+  font-size: 11px;
+  margin-top: 12px;
+  padding-top: 9px;
+  border-top: 1px solid var(--rule);
 }
+.gt-card ul { margin: 4px 0 0; padding-left: 17px; color: var(--ink-2); }
+.gt-card li { margin: 2px 0; }
+.gt-card-fix { color: var(--ink); font-weight: 520; }
+
+/* ── Apparatus ──────────────────────────────────────────────────────────── */
+
+/* One continuous surface divided by hairlines. Not a stack of floating cards. */
+.gt-rail {
+  position: sticky;
+  top: 66px;
+  min-width: 0;
+  border-top: 2px solid var(--ink);
+  font-size: 13px;
+}
+
+.gt-panel { border-bottom: 1px solid var(--rule); }
 .gt-panel > summary {
   cursor: pointer;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 650;
+  padding: 11px 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-2);
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: baseline;
   list-style: none;
+  transition: color 140ms var(--ease);
 }
+.gt-panel > summary:hover { color: var(--ink); }
 .gt-panel > summary::-webkit-details-marker { display: none; }
-.gt-panel > summary::before { content: "\25B8"; color: var(--text-faint); font-size: 10px; }
-.gt-panel[open] > summary::before { content: "\25BE"; }
-.gt-panel-body { padding: 4px 12px 12px; font-size: 13px; }
+.gt-panel-body { padding: 0 0 18px; }
 
-.gt-count { margin-left: auto; font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
-
-.gt-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.gt-check { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; }
-.gt-check-glyph { font-size: 12px; line-height: 1.5; }
-.gt-check-pass .gt-check-glyph { color: var(--ok); }
-.gt-check-warn .gt-check-glyph { color: var(--warn); }
-.gt-check-fail .gt-check-glyph { color: var(--error); }
-.gt-check-label { font-weight: 600; }
-.gt-check-detail { color: var(--text-dim); font-size: 12.5px; overflow-wrap: anywhere; }
-.gt-check-fix { color: var(--accent); font-size: 12.5px; }
-.gt-advisory { font-size: 10px; color: var(--text-faint); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; margin-left: 4px; }
-
-.gt-findings { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.gt-finding { border-left: 3px solid var(--border-strong); padding-left: 9px; }
-.gt-finding-error { border-left-color: var(--error); }
-.gt-finding-warn { border-left-color: var(--warn); }
-.gt-finding-info { border-left-color: var(--info); }
-.gt-finding-rule { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); }
-.gt-finding-msg { font-size: 12.5px; }
-.gt-finding-fix { font-size: 12px; color: var(--accent); }
-.gt-finding a { color: inherit; text-decoration: none; }
-.gt-finding a:hover { text-decoration: underline; }
-
-.gt-legend { display: flex; flex-wrap: wrap; gap: 6px; }
-.gt-legend-item {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: hsl(var(--h) var(--wash-s) var(--wash-l));
-  color: hsl(var(--h) 70% var(--ink-l));
-  border: 1px solid hsl(var(--h) 60% var(--ink-l) / 0.4);
-  white-space: nowrap;
+.gt-count {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  font-weight: 600;
 }
 
-.gt-score { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.gt-score-good { color: var(--ok); }
-.gt-score-ok { color: var(--warn); }
-.gt-score-poor { color: var(--error); }
+.gt-legend { display: grid; gap: 6px; }
+.gt-legend-item {
+  font-size: 12px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.gt-legend-item::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: oklch(var(--v-l) var(--v-c) var(--h, 262));
+  flex: none;
+}
+.gt-legend-item b {
+  margin-left: auto;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+}
+
+.gt-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.gt-check { display: grid; grid-template-columns: 13px minmax(0, 1fr); gap: 9px; }
+.gt-check-glyph { font-size: 11px; line-height: 1.6; font-weight: 700; }
+.gt-check-pass .gt-check-glyph { color: var(--good); }
+.gt-check-warn .gt-check-glyph { color: var(--mid); }
+.gt-check-fail .gt-check-glyph { color: var(--bad); }
+.gt-check-label { font-weight: 620; color: var(--ink); }
+.gt-check-detail { color: var(--ink-2); font-size: 12px; overflow-wrap: anywhere; }
+.gt-check-fix { color: var(--accent); font-size: 12px; margin-top: 2px; }
+.gt-advisory {
+  font-size: 9.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 680;
+  margin-left: 5px;
+}
+
+.gt-group-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 680;
+  color: var(--ink-3);
+  margin: 18px 0 8px;
+}
+.gt-group-label:first-child { margin-top: 0; }
+
+.gt-findings { list-style: none; margin: 0; padding: 0; }
+/* A hairline above each finding and a leading severity glyph. No side stripe. */
+.gt-finding { padding: 12px 0; border-top: 1px solid var(--rule); }
+.gt-finding:first-child { padding-top: 0; border-top: 0; }
+.gt-finding:last-child { padding-bottom: 0; }
+.gt-finding-head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.gt-finding-glyph { font-weight: 700; font-family: var(--sans); flex: none; }
+.gt-finding-error .gt-finding-glyph { color: var(--bad); }
+.gt-finding-warn .gt-finding-glyph { color: var(--mid); }
+.gt-finding-info .gt-finding-glyph { color: var(--accent); }
+.gt-finding-blocking {
+  margin-left: auto;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--bad);
+}
+.gt-finding-msg { font-size: 12.5px; color: var(--ink); }
+.gt-finding-fix { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+
+.gt-score {
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.gt-score span { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--ink-3); }
+.gt-score-good { color: var(--good); }
+.gt-score-ok { color: var(--mid); }
+.gt-score-poor { color: var(--bad); }
 
 /* ── Index ──────────────────────────────────────────────────────────────── */
 
-.gt-index { max-width: 1180px; margin: 0 auto; padding: 24px 20px 96px; }
-.gt-summary { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-bottom: 22px; }
-.gt-stat { display: grid; gap: 1px; }
-.gt-stat b { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.gt-stat span { font-size: 11.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+.gt-index { max-width: 1160px; margin: 0 auto; padding: 44px 28px 40px; }
 
-.gt-spread { display: flex; height: 10px; border-radius: 999px; overflow: hidden; border: 1px solid var(--border); margin: 6px 0 20px; }
-.gt-spread div { min-width: 2px; }
+.gt-index-lede {
+  font-size: 1.25rem;
+  line-height: 1.45;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  max-width: 48ch;
+  margin: 0 0 38px;
+  text-wrap: pretty;
+}
+.gt-index-lede b { font-weight: 680; }
 
-.gt-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-table.gt-list { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 640px; }
-table.gt-list th, table.gt-list td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-table.gt-list th { background: var(--surface-2); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); cursor: pointer; white-space: nowrap; }
-table.gt-list th[aria-sort] { color: var(--text); }
+.gt-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 44px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.gt-stat { display: grid; gap: 0; }
+.gt-stat b {
+  font-size: 25px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.gt-stat span {
+  font-size: 11px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 620;
+}
+
+.gt-spread { display: flex; height: 4px; overflow: hidden; margin: 24px 0 14px; gap: 1px; }
+.gt-spread div { min-width: 2px; border-radius: 1px; }
+
+.gt-index .gt-legend { display: flex; flex-wrap: wrap; gap: 7px 22px; margin-bottom: 34px; }
+.gt-index .gt-legend-item b { margin-left: 3px; }
+
+.gt-table-wrap { overflow-x: auto; border-top: 2px solid var(--ink); }
+table.gt-list {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13.5px;
+  min-width: 660px;
+  font-variant-numeric: tabular-nums;
+}
+table.gt-list th, table.gt-list td {
+  padding: 11px 16px 11px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+}
+table.gt-list th {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  color: var(--ink-3);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: color 140ms var(--ease);
+}
+table.gt-list th:hover, table.gt-list th[aria-sort] { color: var(--ink); }
+table.gt-list th[aria-sort="descending"]::after { content: " \2193"; }
+table.gt-list th[aria-sort="ascending"]::after { content: " \2191"; }
 table.gt-list tbody tr:last-child td { border-bottom: 0; }
-table.gt-list tbody tr:hover { background: var(--surface-2); }
-table.gt-list td.gt-num { text-align: right; font-variant-numeric: tabular-nums; }
-table.gt-list a { color: var(--text); text-decoration: none; font-weight: 600; }
-table.gt-list a:hover { color: var(--accent); text-decoration: underline; }
-.gt-pill { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text-dim); white-space: nowrap; }
-.gt-zero { color: var(--text-faint); }
-.gt-bad { color: var(--error); font-weight: 650; }
-.gt-mid { color: var(--warn); font-weight: 600; }
+table.gt-list td.gt-num { text-align: right; padding-right: 20px; }
+table.gt-list a { color: var(--ink); text-decoration: none; font-weight: 620; }
+table.gt-list a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+table.gt-list .gt-check-detail { font-family: var(--mono); font-size: 11px; margin-top: 2px; }
+.gt-pill { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.gt-zero { color: var(--ink-3); }
+.gt-bad { color: var(--bad); font-weight: 660; }
+.gt-mid { color: var(--mid); font-weight: 620; }
 
-.gt-empty { color: var(--text-dim); padding: 28px 0; }
-.gt-foot { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px; font-size: 12px; color: var(--text-faint); }
+.gt-empty { color: var(--ink-2); padding: 34px 0; max-width: 54ch; }
+.gt-foot {
+  max-width: 80ch;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.7;
+}
 .gt-foot code { font-family: var(--mono); }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
 @media print {
-  .gt-header, .gt-rail, .gt-card { display: none !important; }
-  .gt-main { grid-template-columns: minmax(0, 1fr); }
+  .gt-header, .gt-rail, .gt-card, .gt-theme { display: none !important; }
+  .gt-main { grid-template-columns: minmax(0, 1fr); padding: 0; }
+  .gt-span { border-bottom-width: 1px; }
 }
 </style>
 </head>
 <body>
 <header class="gt-header"><div class="gt-header-inner"><div class="gt-brand"><a href="index.html">groundtruth</a></div><div class="gt-crumb">1 document</div><div class="gt-chips"><span class="gt-chip gt-chip-error">errors <b>2</b></span><span class="gt-chip gt-chip-warn">warnings <b>1</b></span><span class="gt-chip">spans <b>11</b></span><button class="gt-theme" id="gt-theme" type="button">theme</button></div></div></header>
 <div class="gt-index">
+<p class="gt-index-lede">1 document checked. <b>2 blocking findings</b> across 1 document. 2 claims are unsourced or contradicted.</p>
 <div class="gt-summary">
 <div class="gt-stat"><b>1</b><span>documents</span></div>
 <div class="gt-stat"><b>2</b><span>blocking</span></div>
 <div class="gt-stat"><b>1</b><span>advisory</span></div>
 <div class="gt-stat"><b>11</b><span>claims bound</span></div>
 </div>
-<div class="gt-spread"><div title="VERIFIED 7" style="width:63.64%;background:hsl(158 62% 52%)"></div><div title="INFERRED 1" style="width:9.09%;background:hsl(38 62% 52%)"></div><div title="CONTRADICTED 1" style="width:9.09%;background:hsl(350 62% 52%)"></div><div title="UNSOURCED 1" style="width:9.09%;background:hsl(0 62% 52%)"></div><div title="EXTERNAL 1" style="width:9.09%;background:hsl(210 62% 52%)"></div></div>
-<div class="gt-legend" style="margin-bottom:20px"><span class="gt-legend-item" style="--h:158">Verified 7</span><span class="gt-legend-item" style="--h:38">Inferred 1</span><span class="gt-legend-item" style="--h:350">Contradicted 1</span><span class="gt-legend-item" style="--h:0">No source found 1</span><span class="gt-legend-item" style="--h:210">External source 1</span></div>
+<div class="gt-spread"><div title="VERIFIED 7" style="width:63.64%;background:oklch(0.62 0.14 152)"></div><div title="INFERRED 1" style="width:9.09%;background:oklch(0.62 0.14 100)"></div><div title="CONTRADICTED 1" style="width:9.09%;background:oklch(0.62 0.14 10)"></div><div title="UNSOURCED 1" style="width:9.09%;background:oklch(0.62 0.14 32)"></div><div title="EXTERNAL 1" style="width:9.09%;background:oklch(0.62 0.14 248)"></div></div>
+<div class="gt-legend"><span class="gt-legend-item" style="--h:152">Verified<b>7</b></span><span class="gt-legend-item" style="--h:100">Inferred<b>1</b></span><span class="gt-legend-item" style="--h:10">Contradicted<b>1</b></span><span class="gt-legend-item" style="--h:32">No source found<b>1</b></span><span class="gt-legend-item" style="--h:248">External source<b>1</b></span></div>
 <div class="gt-table-wrap"><table class="gt-list"><thead><tr><th data-key="title" data-numeric="0">Document</th><th data-key="profile" data-numeric="0">Profile</th><th data-key="errors" data-numeric="1" aria-sort="descending">Err</th><th data-key="warnings" data-numeric="1">Warn</th><th data-key="spans" data-numeric="1">Spans</th><th data-key="flagged" data-numeric="1">Unsourced</th><th data-key="audited" data-numeric="0">Audited</th></tr></thead><tbody><tr data-title="The Spencer Mansion Runs on Keys" data-profile="grounded" data-errors="2" data-warnings="1" data-spans="11" data-flagged="2" data-hard="0" data-seo="-1" data-audited="2026-08-22" data-risk="221"><td><a href="article-spencer-mansion-runs-on-keys.html">The Spencer Mansion Runs on Keys</a><div class="gt-check-detail">article/spencer-mansion-runs-on-keys.md</div></td><td><span class="gt-pill">grounded</span></td><td class="gt-num gt-bad">2</td><td class="gt-num gt-mid">1</td><td class="gt-num ">11</td><td class="gt-num gt-bad">2</td><td class="gt-zero">2026-08-22</td></tr></tbody></table></div>
 </div>
 <footer class="gt-foot">sorted worst first by <code>risk = 100 &times; errors + 10 &times; (unsourced + contradicted) + 3 &times; hard + warnings</code>. Click a column to re-sort. Modules: grounding.</footer>

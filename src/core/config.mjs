@@ -19,16 +19,26 @@ import { resolveProfiles, BASE_PROFILE } from './profile.mjs';
 export const CONFIG_NAMES = ['groundtruth.config.mjs', 'groundtruth.config.js', '.groundtruthrc.mjs'];
 
 export const DEFAULT_VERDICTS = {
-  VERIFIED: { severity: 'off', label: 'Verified', hue: 158, requires: ['source', 'quote'] },
-  EXTERNAL: { severity: 'off', label: 'External source', hue: 210, requires: ['source'] },
-  FIGURE: { severity: 'off', label: 'Read off a figure', hue: 275, requires: [] },
+  // One hue per verdict, at least 28 degrees apart, chosen so every one stays
+  // inside the sRGB gamut at the shared lightness. Lightness and chroma live in
+  // the stylesheet, so every verdict carries the same weight and only hue
+  // separates them. test/contrast.test.mjs recomputes the spacing and the
+  // contrast, so a hue that drifts too close to its neighbour fails the suite.
+  //
+  // The two blocking verdicts sit close together in the red family on purpose.
+  // They are the same kind of problem, and treatment rather than hue is what
+  // separates them from the rest: both carry `emphatic`, which is the only thing
+  // that draws a background wash.
+  VERIFIED: { severity: 'off', label: 'Verified', hue: 152, requires: ['source', 'quote'] },
+  EXTERNAL: { severity: 'off', label: 'External source', hue: 248, requires: ['source'] },
+  FIGURE: { severity: 'off', label: 'Read off a figure', hue: 304, requires: [] },
   // A nested array means "at least one of these". A derivation explains an
   // inference at least as well as a note does, and demanding both would push
   // authors to write the same sentence twice.
-  INFERRED: { severity: 'warn', label: 'Inferred', hue: 38, requires: [['note', 'derivation']] },
-  'DOC-DEFECT': { severity: 'warn', label: 'Source is wrong', hue: 22, requires: ['source', ['note', 'derivation']] },
-  UNSOURCED: { severity: 'error', label: 'No source found', hue: 0, requires: [], emphatic: true },
-  CONTRADICTED: { severity: 'error', label: 'Contradicted', hue: 350, requires: ['note'], emphatic: true },
+  INFERRED: { severity: 'warn', label: 'Inferred', hue: 100, requires: [['note', 'derivation']] },
+  'DOC-DEFECT': { severity: 'warn', label: 'Source is wrong', hue: 68, requires: ['source', ['note', 'derivation']] },
+  UNSOURCED: { severity: 'error', label: 'No source found', hue: 32, requires: [], emphatic: true },
+  CONTRADICTED: { severity: 'error', label: 'Contradicted', hue: 10, requires: [['note', 'derivation']], emphatic: true },
 };
 
 /**
@@ -38,7 +48,7 @@ export const DEFAULT_VERDICTS = {
  * gone stale.
  */
 export const DERIVED_VERDICTS = {
-  STALE: { severity: 'warn', label: 'Source has moved', hue: 45, derived: true },
+  STALE: { severity: 'warn', label: 'Source has moved', hue: 196, derived: true },
 };
 
 export function findConfig(startDir) {

@@ -44,7 +44,7 @@ function renderBlock(block, context) {
 
     case 'code':
       return [
-        `<div class="gt-scroll" data-line="${block.line}">`,
+        `<div class="gt-scroll${block.fenced && !block.lang ? ' gt-untagged-fence' : ''}" data-line="${block.line}">`,
         `<pre><code${block.lang ? ` class="language-${escapeHtml(block.lang)}"` : ' class="gt-untagged"'}>`,
         escapeHtml(block.value),
         '</code></pre></div>',
