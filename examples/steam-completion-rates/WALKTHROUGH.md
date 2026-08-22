@@ -5,7 +5,7 @@ Four blocking findings, one STALE, and no network at any point.
 ## 0. Run it
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 Exit 1. Four blocking, seven advisory.
@@ -13,7 +13,7 @@ Exit 1. Four blocking, seven advisory.
 ## 1. The two image findings
 
 ```bash
-npx groundtruth-cli explain read.alt-generic
+npx @highnessatharva/groundtruth explain read.alt-generic
 ```
 
 **`read.alt-generic`** at line 32. The alt text reads `chart`, which names the file
@@ -28,7 +28,7 @@ walkthrough, cut it.
 Both are mechanical. Both have exactly one right answer, which is why they block.
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 ## 2. The contradiction, which is a data problem
@@ -54,7 +54,7 @@ players, in a piece about twelve invented titles. Cut it.
 ## 4. STALE, and why it is not an error
 
 ```bash
-npx groundtruth-cli check --json
+npx @highnessatharva/groundtruth check --json
 ```
 
 Look for `ground.stale`. It reports at `warn`, not `error`, and that is deliberate.
@@ -88,9 +88,9 @@ which is why this works on a plane.
 When you have decided the current sources are the truth:
 
 ```bash
-npx groundtruth-cli resolve --refresh
+npx @highnessatharva/groundtruth resolve --refresh
 git diff groundtruth.lock.json
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 The pin moves to the current hash and STALE clears, because there is no longer a
@@ -100,7 +100,7 @@ a warning, and the lockfile diff is the record of it.
 To refuse instead:
 
 ```bash
-npx groundtruth-cli check --frozen
+npx @highnessatharva/groundtruth check --frozen
 ```
 
 ## 6. Add a claim of your own

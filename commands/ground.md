@@ -9,7 +9,7 @@ Ground `$ARGUMENTS`.
 1. Scaffold the candidates:
 
 ```bash
-npx groundtruth-cli draft $ARGUMENTS --write
+npx @highnessatharva/groundtruth draft $ARGUMENTS --write
 ```
 
 2. Read `groundtruth.config.mjs` for the declared sources, then read the sources
@@ -22,7 +22,7 @@ npx groundtruth-cli draft $ARGUMENTS --write
 4. Verify:
 
 ```bash
-npx groundtruth-cli check $ARGUMENTS
+npx @highnessatharva/groundtruth check $ARGUMENTS
 ```
 
 Grounding a long document is a lot of searching. Consider handing it to the

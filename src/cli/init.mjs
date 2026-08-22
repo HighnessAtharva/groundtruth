@@ -32,7 +32,7 @@ export async function runInit(argv) {
     writeOut(paint(`${CONFIG_NAMES[0]} already exists.`, 'yellow'));
     writeOut('  Nothing was written. Pass --force to overwrite it.');
     writeOut('');
-    writeOut(`Next:  ${paint('npx groundtruth-cli check', 'cyan')}`);
+    writeOut(`Next:  ${paint('npx @highnessatharva/groundtruth check', 'cyan')}`);
     return 0;
   }
 
@@ -128,7 +128,7 @@ export async function runInit(argv) {
   writeOut('');
   writeOut('Next:');
   writeOut('');
-  writeOut(`  ${paint(`npx groundtruth-cli check${found[0] ? ` ${found[0]}` : ''}`, 'cyan')}`);
+  writeOut(`  ${paint(`npx @highnessatharva/groundtruth check${found[0] ? ` ${found[0]}` : ''}`, 'cyan')}`);
   writeOut('');
   writeOut(paint('Docs: https://github.com/HighnessAtharva/groundtruth#readme', 'dim'));
   return 0;
@@ -302,11 +302,11 @@ export const spans = [
 Scaffold one from a document instead of writing it by hand:
 
 \`\`\`bash
-npx groundtruth-cli draft docs/getting-started.md --write
+npx @highnessatharva/groundtruth draft docs/getting-started.md --write
 \`\`\`
 `;
 
-const STOP_HOOK = 'npx groundtruth-cli check --changed --hook';
+const STOP_HOOK = 'npx @highnessatharva/groundtruth check --changed --hook';
 
 const WORKFLOW = `name: groundtruth
 
@@ -330,11 +330,11 @@ jobs:
       - run: npm ci
 
       # --frozen refuses to verify against a revision the lockfile does not name.
-      - run: npx groundtruth-cli check --changed --frozen
+      - run: npx @highnessatharva/groundtruth check --changed --frozen
 
       # Runs even when the gate failed, so a reviewer sees every finding inline.
       - if: always()
-        run: npx groundtruth-cli check --format sarif > groundtruth.sarif
+        run: npx @highnessatharva/groundtruth check --format sarif > groundtruth.sarif
       - uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
@@ -351,7 +351,7 @@ This repo runs \`groundtruth\` over \`${glob}\`. Modules on: ${modules.join(', '
 Run this before you finish any edit to a matched file:
 
 \`\`\`bash
-npx groundtruth-cli check <path>
+npx @highnessatharva/groundtruth check <path>
 \`\`\`
 
 Exit codes: \`0\` clean, \`1\` blocking findings, \`2\` usage, \`3\` config, \`4\` internal,

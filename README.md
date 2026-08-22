@@ -86,12 +86,14 @@ ok   steam-completion-rates     4 blocking, 7 advisory, 11 findings
 Node 20.11 or later. One runtime dependency (`yaml`, which has none of its own).
 
 ```bash
-npm install --save-dev groundtruth-cli
-npx groundtruth-cli init
+npm install --save-dev @highnessatharva/groundtruth
+npx @highnessatharva/groundtruth init
 ```
 
-The package is `groundtruth-cli` and the command it installs is `groundtruth`. npm
-rejected the bare name as too close to an unrelated package called `ground-truth`.
+The package is scoped and the command it installs is `groundtruth`. npm refused both
+`groundtruth` and `groundtruth-cli`, because its similarity guard strips punctuation
+before comparing and two unrelated packages already hold `ground-truth` and
+`ground-truth-cli`.
 
 To work from a clone instead:
 
@@ -116,7 +118,7 @@ groundtruth
 
 Next:
 
-  npx groundtruth-cli check docs/getting-started.md
+  npx @highnessatharva/groundtruth check docs/getting-started.md
 ```
 
 **Start with readability.** It needs no sources and no authoring, and it finds
@@ -174,7 +176,7 @@ No imports, which is what `groundtruth init` writes.
 ### Scaffold the claims
 
 ```bash
-npx groundtruth-cli draft article/keys.md --write
+npx @highnessatharva/groundtruth draft article/keys.md --write
 ```
 
 Every candidate comes out as `TODO`, which warns rather than blocks, so the scaffold
@@ -211,7 +213,7 @@ export const spans = [
 ### Run it
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 ```
@@ -236,7 +238,7 @@ Change `three` to `four` in the article, update the span's quote, set it to
 `VERIFIED`. Cut the nine-hours sentence, delete its span.
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 ```
@@ -406,8 +408,8 @@ The import form is equivalent and is what a custom adapter or a custom preset us
 Everything below is optional.
 
 ```js
-import { local, git, web, records } from 'groundtruth-cli/adapters';
-import { longform, shortform, neutral, atharva, ste } from 'groundtruth-cli/presets';
+import { local, git, web, records } from '@highnessatharva/groundtruth/adapters';
+import { longform, shortform, neutral, atharva, ste } from '@highnessatharva/groundtruth/presets';
 import { defineRule } from 'groundtruth';
 
 export default {
@@ -642,9 +644,9 @@ match: 'collects with Promise.all',     // correct
 ### Authoring without hating it
 
 ```bash
-npx groundtruth-cli draft docs/page.md --write     # scaffold, everything TODO
-npx groundtruth-cli draft docs/page.md --update    # add new candidates, keep the rest
-npx groundtruth-cli check --fix-matches            # repair a desynced match
+npx @highnessatharva/groundtruth draft docs/page.md --write     # scaffold, everything TODO
+npx @highnessatharva/groundtruth draft docs/page.md --update    # add new candidates, keep the rest
+npx @highnessatharva/groundtruth check --fix-matches            # repair a desynced match
 ```
 
 `draft` scores every sentence for claim-likelihood: numbers, absolutes, comparisons,
@@ -663,9 +665,9 @@ deleting it. Nothing is ever silently dropped.
 ## Rules
 
 ```bash
-npx groundtruth-cli explain               # every rule, with what it checks
-npx groundtruth-cli explain read.series   # one rule, and why it exists
-npx groundtruth-cli explain CONTRADICTED  # a verdict
+npx @highnessatharva/groundtruth explain               # every rule, with what it checks
+npx @highnessatharva/groundtruth explain read.series   # one rule, and why it exists
+npx @highnessatharva/groundtruth explain CONTRADICTED  # a verdict
 ```
 
 `explain` exists because the most valuable sentence in the harness this tool came from
@@ -743,7 +745,7 @@ groundtruth resolve --offline             # audit cache coverage, fetch nothing
 ## The report
 
 ```bash
-npx groundtruth-cli report
+npx @highnessatharva/groundtruth report
 ```
 
 One self-contained HTML file per document plus an index. CSS and JS inlined, data in a
@@ -846,9 +848,9 @@ Copy [`.github/workflows/example-project.yml`](.github/workflows/example-project
 ```yaml
 - uses: actions/checkout@v4
   with: { fetch-depth: 0 }        # --changed needs history for a merge base
-- run: npx groundtruth-cli check --changed --frozen
+- run: npx @highnessatharva/groundtruth check --changed --frozen
 - if: always()
-  run: npx groundtruth-cli check --format sarif > groundtruth.sarif
+  run: npx @highnessatharva/groundtruth check --format sarif > groundtruth.sarif
 - uses: github/codeql-action/upload-sarif@v3
   if: always()
   with: { sarif_file: groundtruth.sarif }

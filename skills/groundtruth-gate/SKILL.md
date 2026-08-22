@@ -9,7 +9,7 @@ allowed-tools: Read, Edit, Write, Grep, Glob, Bash
 ## Triage, in order
 
 ```bash
-npx groundtruth-cli check --json
+npx @highnessatharva/groundtruth check --json
 ```
 
 1. `summary.blocking`. Zero means done. Stop.
@@ -33,7 +33,7 @@ right answer. That is why it cannot block.
 | 2 | usage error | Read the message, fix the command |
 | 3 | config error | The setup is wrong, not the content. Do not touch the documents |
 | 4 | internal error | Report it. Do not work around it |
-| 5 | network needed and unavailable | Run `npx groundtruth-cli resolve`, or accept the offline limit |
+| 5 | network needed and unavailable | Run `npx @highnessatharva/groundtruth resolve`, or accept the offline limit |
 
 3 and 1 are deliberately different. A broken config and a bad claim are not the
 same problem and must not be treated the same way.
@@ -56,16 +56,16 @@ a bad record.
 ## The commands
 
 ```bash
-npx groundtruth-cli check <path>              # one file, not the corpus
-npx groundtruth-cli check --changed           # only what this branch touched
-npx groundtruth-cli check --json              # stdout is pure JSON, chatter on stderr
-npx groundtruth-cli check --fix-matches       # repair desynced span matches
-npx groundtruth-cli check --frozen            # CI: refuse to verify at a moved pin
-npx groundtruth-cli check --module readability --module seo   # skip grounding
-npx groundtruth-cli check --format sarif      # for a code-scanning upload
-npx groundtruth-cli report                    # the HTML, non-blocking
-npx groundtruth-cli explain <rule>            # why this rule exists
-npx groundtruth-cli resolve                   # the only networked command
+npx @highnessatharva/groundtruth check <path>              # one file, not the corpus
+npx @highnessatharva/groundtruth check --changed           # only what this branch touched
+npx @highnessatharva/groundtruth check --json              # stdout is pure JSON, chatter on stderr
+npx @highnessatharva/groundtruth check --fix-matches       # repair desynced span matches
+npx @highnessatharva/groundtruth check --frozen            # CI: refuse to verify at a moved pin
+npx @highnessatharva/groundtruth check --module readability --module seo   # skip grounding
+npx @highnessatharva/groundtruth check --format sarif      # for a code-scanning upload
+npx @highnessatharva/groundtruth report                    # the HTML, non-blocking
+npx @highnessatharva/groundtruth explain <rule>            # why this rule exists
+npx @highnessatharva/groundtruth resolve                   # the only networked command
 ```
 
 ## The findings you will see most
@@ -94,7 +94,7 @@ dominant reason. Fix that one thing, not all of them.
 ## Before you say you are done
 
 ```bash
-npx groundtruth-cli check --changed
+npx @highnessatharva/groundtruth check --changed
 ```
 
 Exit 0, or a clear statement of what is left and why it is the user's call. Never

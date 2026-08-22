@@ -7,7 +7,7 @@ allowed-tools: Bash, Read, Grep, Glob
 Run the gate on `$ARGUMENTS` (the whole corpus if empty):
 
 ```bash
-npx groundtruth-cli check $ARGUMENTS --json
+npx @highnessatharva/groundtruth check $ARGUMENTS --json
 ```
 
 Then follow the `groundtruth-gate` skill. In short:

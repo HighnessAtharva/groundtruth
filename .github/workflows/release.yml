@@ -129,8 +129,8 @@ jobs:
           npm install --no-audit --no-fund "$name@$version"
           mkdir -p docs
           printf '# A doc\n\nThe cache holds 512 items and evicts the oldest first.\n' > docs/a.md
-          # Call the bin directly. The package is groundtruth-cli and the command
-          # is `groundtruth`, so this also proves the bin map survived publishing.
+          # Call the bin directly. The package name and the command differ, so
+          # this also proves the bin map survived publishing.
           gt=./node_modules/.bin/groundtruth
           test -x "$gt" || { echo "::error::the package exposes no groundtruth command"; exit 1; }
           "$gt" --version

@@ -5,7 +5,7 @@ Six blocking findings, then two more you create on purpose.
 ## 0. Run it
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 Exit code 1. Read `summary.blocking` first, then work only the findings whose
@@ -13,7 +13,7 @@ Exit code 1. Read `summary.blocking` first, then work only the findings whose
 sort by anything else. That is the whole triage rule.
 
 ```bash
-npx groundtruth-cli check --json
+npx @highnessatharva/groundtruth check --json
 ```
 
 ## 1. The four mechanical ones
@@ -21,7 +21,7 @@ npx groundtruth-cli check --json
 Each has exactly one right answer, which is why it blocks.
 
 ```bash
-npx groundtruth-cli explain seo.fence-language
+npx @highnessatharva/groundtruth explain seo.fence-language
 ```
 
 - **`seo.fence-language`** carries an exact patch. Add `js` to the fence at line 47.
@@ -35,7 +35,7 @@ npx groundtruth-cli explain seo.fence-language
   the test for whether an FAQ should exist at all.
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 Two errors left, both grounding.
@@ -58,7 +58,7 @@ settles. Rewrite the sentence, then update the span so the quote supports the ne
 wording, and set the verdict to `VERIFIED`.
 
 ```bash
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 Zero errors. The INFERRED warning stays, which is correct. A derived claim is a
@@ -67,7 +67,7 @@ standing invitation to recheck the arithmetic when the source changes.
 ## 4. Read the report
 
 ```bash
-npx groundtruth-cli report
+npx @highnessatharva/groundtruth report
 ```
 
 Every code claim links to a line in `sindresorhus/p-limit` at the pinned SHA. Click
@@ -76,9 +76,9 @@ one. That link is the difference between a citation and a gesture at a citation.
 ## 5. Break it on purpose: move the pin
 
 ```bash
-npx groundtruth-cli resolve --refresh
+npx @highnessatharva/groundtruth resolve --refresh
 git diff groundtruth.lock.json
-npx groundtruth-cli check
+npx @highnessatharva/groundtruth check
 ```
 
 If upstream has moved since this example was written, some quotes moved with it and
@@ -92,7 +92,7 @@ is also the correct answer.
 To refuse the move rather than accept it:
 
 ```bash
-npx groundtruth-cli check --frozen
+npx @highnessatharva/groundtruth check --frozen
 ```
 
 That is the CI mode. A build that would have quietly verified against a newer
@@ -101,7 +101,7 @@ revision stops instead, and the finding names both SHAs.
 ## 6. Run offline
 
 ```bash
-npx groundtruth-cli resolve --offline
+npx @highnessatharva/groundtruth resolve --offline
 ```
 
 Every quote resolves from the committed cache and the command exits 0 with no

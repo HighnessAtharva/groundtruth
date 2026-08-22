@@ -6,7 +6,7 @@
 // implement it. What it implements is the mechanical half: the sentence caps, the
 // article requirement, and the constructions the standard forbids outright.
 //
-//   import { ste } from 'groundtruth-cli/presets';
+//   import { ste } from '@highnessatharva/groundtruth/presets';
 //   profiles: { manual: { style: { enabled: true, preset: ste.style } } }
 //
 // What it cannot check is the approved-vocabulary rule, which is the heart of the

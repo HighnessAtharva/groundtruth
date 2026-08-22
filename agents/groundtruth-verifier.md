@@ -22,13 +22,13 @@ So you do that work here and hand back four things. Nothing else.
 1. Read `groundtruth.config.mjs`. Note the declared sources, their ids, and the
    `spanMaps` path template.
 2. Read the document.
-3. Scaffold: `npx groundtruth-cli draft <path> --write`. This writes every candidate as
+3. Scaffold: `npx @highnessatharva/groundtruth draft <path> --write`. This writes every candidate as
    `TODO`, which warns rather than blocks.
 4. Read the sources. Actually read them. `grep` for the number, then open the file
    around it, because a number can appear in a row that means something else.
 5. For each span, fill in `source`, `quote` and `verdict`. Follow the
    `groundtruth-span-maps` skill for the verdict ladder and the ref grammar.
-6. `npx groundtruth-cli check <path>` and fix every refusal.
+6. `npx @highnessatharva/groundtruth check <path>` and fix every refusal.
 7. Repeat 6 until the only findings left are `UNSOURCED`, `CONTRADICTED`, `INFERRED`
    or `TODO`, which are judgements rather than errors.
 

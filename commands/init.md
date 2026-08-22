@@ -14,7 +14,7 @@ Before running anything, look at the repository and decide which modules fit:
 Then:
 
 ```bash
-npx groundtruth-cli init --modules <the ones you chose>
+npx @highnessatharva/groundtruth init --modules <the ones you chose>
 ```
 
 Read what it wrote, run the command it printed, and report the result. If it found

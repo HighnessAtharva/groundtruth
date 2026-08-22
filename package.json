@@ -1,5 +1,5 @@
 {
-  "name": "groundtruth-cli",
+  "name": "@highnessatharva/groundtruth",
   "version": "0.1.0",
   "description": "Bind every factual claim in a document to a verbatim quote in a real source, then fail the build when the binding breaks. Provenance, readability and SEO checks for markdown.",
   "type": "module",

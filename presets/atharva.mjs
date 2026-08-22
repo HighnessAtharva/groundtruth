@@ -6,7 +6,7 @@
 // that reason: a tool that fails a video-game write-up on the word "exciting" reads
 // as broken to a stranger.
 //
-//   import { atharva } from 'groundtruth-cli/presets';
+//   import { atharva } from '@highnessatharva/groundtruth/presets';
 //   profiles: { post: { style: { enabled: true, preset: atharva.style } } }
 //
 // Copy it, cut what you disagree with, and keep your own version in your repo. That

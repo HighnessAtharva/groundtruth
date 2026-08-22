@@ -90,7 +90,7 @@ export async function runDraft(argv) {
 
   if (wrote) {
     writeOut('');
-    writeOut(`Next:  ${paint('npx groundtruth-cli check', 'cyan')}`);
+    writeOut(`Next:  ${paint('npx @highnessatharva/groundtruth check', 'cyan')}`);
     writeOut('');
   }
   return 0;

@@ -1,4 +1,4 @@
-// Preset entry point. `import { neutral, longform, atharva } from 'groundtruth-cli/presets'`.
+// Preset entry point. `import { neutral, longform, atharva } from '@highnessatharva/groundtruth/presets'`.
 //
 // `neutral` ships on. `atharva` and `ste` are opinions and must be opted into.
 
