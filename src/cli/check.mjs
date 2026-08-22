@@ -4,6 +4,8 @@
 // one-line edit costs a full-corpus run. That is a real usability defect and it
 // does not get carried over.
 
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { loadConfig } from '../core/config.mjs';
 import { buildEngine } from '../core/engine.mjs';
 import { countFindings } from '../core/findings.mjs';
@@ -38,6 +40,17 @@ export async function runCheck(argv) {
     writeErr('');
   }
 
+  // `--fix-matches` is the only mutation `check` can perform, and it only ever
+  // applies a patch the tool judged exact. See suggestMatch in grounding/verify.
+  if (flags['fix-matches']) {
+    const applied = applyMatchFixes(result, config, flags);
+    if (applied > 0) {
+      writeErr(paint(`repaired ${applied} span match(es). re-running.`, 'cyan'));
+      return runCheck({ ...argv, flags: { ...flags, 'fix-matches': false } });
+    }
+    writeErr(paint('no span match could be repaired with confidence.', 'yellow'));
+  }
+
   const payload = buildPayload({ config, result, active, durationMs });
 
   if (flags.json) {
@@ -49,6 +62,59 @@ export async function runCheck(argv) {
   }
 
   return payload.summary.blocking > 0 ? 1 : 0;
+}
+
+/**
+ * Apply every exact patch attached to a match-not-found finding.
+ *
+ * Only a patch the tool marked `confidence: high` carries a `patch` object at
+ * all, so there is nothing fuzzy to apply here. A find string that no longer
+ * appears, or appears twice, is skipped and reported rather than guessed at.
+ */
+function applyMatchFixes(result, config, flags) {
+  const byFile = new Map();
+
+  for (const entry of result.documents) {
+    for (const finding of entry.findings) {
+      const patch = finding.fix?.patch;
+      if (!patch || finding.rule !== 'ground.match-not-found') continue;
+      if (!byFile.has(patch.file)) byFile.set(patch.file, []);
+      byFile.get(patch.file).push(patch);
+    }
+  }
+
+  let applied = 0;
+
+  for (const [file, patches] of byFile) {
+    const absolute = path.resolve(config.root, file);
+    if (!existsSync(absolute)) {
+      writeErr(paint(`  skipped ${file}: not on disk`, 'yellow'));
+      continue;
+    }
+    let source = readFileSync(absolute, 'utf8');
+    let changed = 0;
+
+    for (const patch of patches) {
+      const needle = JSON.stringify(patch.find).slice(1, -1);
+      const replacement = JSON.stringify(patch.replace).slice(1, -1);
+      const occurrences = source.split(needle).length - 1;
+      if (occurrences !== 1) {
+        writeErr(paint(`  skipped a patch in ${file}: the match text appears ${occurrences} times in the span map`, 'yellow'));
+        continue;
+      }
+      source = source.replace(needle, replacement);
+      changed += 1;
+      writeErr(`  ${paint('-', 'red')} ${patch.find}`);
+      writeErr(`  ${paint('+', 'green')} ${patch.replace}`);
+    }
+
+    if (changed && !flags['dry-run']) {
+      writeFileSync(absolute, source, 'utf8');
+      applied += changed;
+    }
+  }
+
+  return applied;
 }
 
 function normalizeModules(flags) {
