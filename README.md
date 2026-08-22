@@ -1066,6 +1066,10 @@ verdict names, exit codes, the adapter interface, and the `defineRule` contract.
 Semver does not cover: the HTML markup, the report layout, CSS class names, the SEO
 score formula, or the exact wording of a message.
 
+Releases are published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements),
+so every version on npm carries a verifiable attestation linking the tarball to the
+commit and the workflow run that built it. [RELEASING.md](RELEASING.md) is the procedure.
+
 ---
 
 ## Contributing

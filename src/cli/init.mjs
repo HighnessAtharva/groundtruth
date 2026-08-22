@@ -10,6 +10,10 @@ import { discover } from '../core/discover.mjs';
 import { CONFIG_NAMES } from '../core/config.mjs';
 import { paint, writeOut, pluralize } from './format.mjs';
 import { UsageError } from '../core/rules.mjs';
+// Read the version from this package, never from `npm_package_version`. Under
+// `npx` inside somebody else's project that variable holds *their* version, so
+// the banner reported the consumer's version as the tool's.
+import { version } from '../version.mjs';
 
 const MODULES = ['grounding', 'readability', 'seo'];
 
@@ -110,7 +114,7 @@ export async function runInit(argv) {
   const found = safeDiscover(root, glob);
 
   writeOut('');
-  writeOut(`groundtruth ${paint(process.env.npm_package_version || '', 'dim')}`.trimEnd());
+  writeOut(`groundtruth ${paint(version, 'dim')}`);
   writeOut('');
   for (const [file, note] of written) {
     writeOut(`  ${paint('wrote', 'green')}  ${file.padEnd(32)}${paint(note, 'dim')}`.trimEnd());
@@ -119,7 +123,8 @@ export async function runInit(argv) {
     writeOut(`  ${paint('kept ', 'dim')}  ${note}`);
   }
   writeOut('');
-  writeOut(`  ${pluralize(found.length, 'document')} match ${glob}`);
+  const verb = found.length === 1 ? 'matches' : 'match';
+  writeOut(`  ${pluralize(found.length, 'document')} ${verb} ${glob}`);
   writeOut('');
   writeOut('Next:');
   writeOut('');

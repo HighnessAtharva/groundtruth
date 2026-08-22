@@ -1,0 +1,135 @@
+# Publish to npm from CI, with provenance.
+#
+# Provenance links the published tarball to the exact commit and workflow run that
+# built it, and npm shows the badge on the package page. It needs three things, all
+# of which are true here: a public repository, `id-token: write`, and npm 9.5 or
+# later, which Node 20 ships.
+#
+# The trigger is a published GitHub Release rather than a tag push, so the release
+# notes and the publish are one deliberate act. `workflow_dispatch` is there for a
+# dry run that proves the whole path without publishing anything.
+#
+# Setup, once: create an **Automation** token at npmjs.com under Access Tokens and
+# add it as the `NPM_TOKEN` repository secret. An Automation token bypasses 2FA,
+# which is the point: a CI publish cannot type a one-time password.
+
+name: release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Run every check and pack the tarball, but do not publish'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write        # required for provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Without registry-url, NODE_AUTH_TOKEN is ignored and the publish fails
+          # with a 401 that reads like a bad token.
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      # The tag and the manifest must agree, or you publish 0.1.0 under v0.2.0 and
+      # the mismatch is invisible until somebody installs the wrong thing.
+      - name: tag matches package.json
+        if: github.event_name == 'release'
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest="$(node -p 'require("./package.json").version')"
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::tag $GITHUB_REF_NAME implies $tag but package.json says $manifest"
+            exit 1
+          fi
+          echo "publishing $manifest"
+
+      - name: this version is not already on the registry
+        if: github.event_name == 'release'
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "groundtruth@$version" version --silent 2>/dev/null; then
+            echo "::error::groundtruth@$version is already published. Bump the version."
+            exit 1
+          fi
+          echo "$version is unclaimed"
+
+      - name: tests
+        run: npm test
+
+      - name: examples report what they are supposed to report
+        run: npm run test:examples
+
+      # The property the committed cache exists for. If this fails, the package
+      # would ship a broken offline story.
+      - name: examples verify with no network
+        run: npm run test:offline
+
+      - name: pack
+        run: npm pack
+
+      - name: what would ship
+        run: |
+          tar -tzf groundtruth-*.tgz | sed 's|^package/||' | sort
+          echo "---"
+          ls -lh groundtruth-*.tgz
+
+      - name: publish
+        if: github.event_name == 'release'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: the registry agrees
+        if: github.event_name == 'release'
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          for attempt in 1 2 3 4 5; do
+            if [ "$(npm view "groundtruth@$version" version --silent 2>/dev/null)" = "$version" ]; then
+              echo "groundtruth@$version is live"
+              exit 0
+            fi
+            echo "not visible yet, waiting"
+            sleep 10
+          done
+          echo "::error::published, but the registry did not report $version within 50s"
+          exit 1
+
+      # Proof the published artifact works, rather than proof it uploaded.
+      - name: install the published package and run it
+        if: github.event_name == 'release'
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          work="$(mktemp -d)"
+          cd "$work"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund "groundtruth@$version"
+          mkdir -p docs
+          printf '# A doc\n\nThe cache holds 512 items and evicts the oldest first.\n' > docs/a.md
+          npx groundtruth --version
+          npx groundtruth init --modules readability
+          npx groundtruth check
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tarball
+          path: groundtruth-*.tgz
+          retention-days: 14

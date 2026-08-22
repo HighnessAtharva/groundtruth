@@ -4,3 +4,6 @@ node_modules/
 .DS_Store
 .scratch/
 .bench/
+
+# npm pack output, produced during release verification
+*.tgz

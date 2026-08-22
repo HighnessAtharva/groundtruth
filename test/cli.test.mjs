@@ -5,6 +5,8 @@ import { toSarif } from '../src/cli/sarif.mjs';
 import { discover } from '../src/core/discover.mjs';
 import { normalizeFinding } from '../src/core/findings.mjs';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { version } from '../src/version.mjs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -212,4 +214,71 @@ test('SARIF paths are project-relative with forward slashes', () => {
 test('the fix instruction travels in the message, where a reviewer will read it', () => {
   const results = toSarif(payload(), { root: process.cwd(), rules: RULES }).runs[0].results;
   assert.match(results[0].message.text, /Fix: Cut 61 characters\./);
+});
+
+// ---------------------------------------------------------------------------
+// The first screen a new user sees
+// ---------------------------------------------------------------------------
+
+// Driven as a subprocess on purpose. The banner and the match count are what a
+// new user reads before anything else, and only the real binary proves what
+// they say.
+function runCli(args, cwd, env = {}) {
+  const bin = path.join(import.meta.dirname, '..', 'bin', 'groundtruth.mjs');
+  const result = spawnSync(process.execPath, [bin, ...args], {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, ...env, NO_COLOR: '1' },
+  });
+  return { out: result.stdout || '', err: result.stderr || '', code: result.status };
+}
+
+function scratchProject() {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gt-cli-'));
+  mkdirSync(path.join(dir, 'docs'));
+  writeFileSync(path.join(dir, 'docs', 'a.md'), '# A doc\n\nThe cache holds 512 items.\n');
+  // A consumer project whose own version differs from ours, which is the case
+  // that produced the bug.
+  writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'consumer', version: '1.0.0' }));
+  return dir;
+}
+
+test('init reports this package version, not the consumer project version', () => {
+  // Under `npx` inside somebody else's project, `npm_package_version` holds
+  // *their* version. The banner read it, so in a fresh `npm init -y` project
+  // the first command a new user ever ran claimed "groundtruth 1.0.0".
+  const dir = scratchProject();
+  try {
+    const { out, code } = runCli(['init', '--modules', 'readability'], dir, {
+      npm_package_version: '9.9.9',
+    });
+    assert.equal(code, 0, `init exited ${code}`);
+    const banner = out.split('\n').find((l) => l.trim().startsWith('groundtruth'));
+    assert.ok(banner, `init printed no banner:\n${out}`);
+    assert.ok(banner.includes(version), `banner ${JSON.stringify(banner)} omits ${version}`);
+    assert.ok(!banner.includes('9.9.9'), 'banner read npm_package_version');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('one matching document reads as a sentence', () => {
+  const dir = scratchProject();
+  try {
+    const { out } = runCli(['init', '--modules', 'readability'], dir);
+    assert.match(out, /1 document matches docs/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('--version prints the version alone, for scripts to read', () => {
+  const dir = scratchProject();
+  try {
+    const { out, code } = runCli(['--version'], dir, { npm_package_version: '9.9.9' });
+    assert.equal(code, 0);
+    assert.equal(out.trim(), version);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
