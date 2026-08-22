@@ -1,0 +1,36 @@
+# What a consumer's own workflow looks like. Copy this into your repo.
+name: groundtruth
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # --changed needs history to find a merge base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # --frozen refuses to verify against a revision the lockfile does not name,
+      # so a build cannot quietly pass against a newer source.
+      - name: gate
+        run: npx groundtruth check --changed --frozen
+
+      # Runs even when the gate failed, so a reviewer sees every finding inline on
+      # the diff rather than only the first one.
+      - name: findings as code scanning alerts
+        if: always()
+        run: npx groundtruth check --format sarif > groundtruth.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: groundtruth.sarif
+          category: groundtruth

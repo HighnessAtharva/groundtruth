@@ -1,0 +1,17 @@
+{
+  "name": "groundtruth",
+  "owner": {
+    "name": "HighnessAtharva",
+    "url": "https://github.com/HighnessAtharva"
+  },
+  "plugins": [
+    {
+      "name": "groundtruth",
+      "source": "./",
+      "description": "Bind every factual claim in a document to a verbatim quote in a real source, then gate on it.",
+      "version": "0.1.0",
+      "category": "writing",
+      "keywords": ["fact-check", "citations", "provenance", "readability", "seo", "aeo", "content-gate"]
+    }
+  ]
+}

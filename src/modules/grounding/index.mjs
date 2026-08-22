@@ -302,7 +302,11 @@ export const stages = [
                 }));
               }
             } else {
-              const resolved = await adapter.resolve(ref, pins[adapter.id]);
+              // Offline has to reach the adapter, or the guarantee is only ever
+              // accidental: a warm cache passes and a cold one quietly fetches.
+              const resolved = await adapter.resolve(ref, pins[adapter.id], {
+                offline: Boolean(context.offline),
+              });
               if (resolved?.error || !resolved?.text) {
                 findings.push(normalizeFinding({
                   rule: 'ground.source-unreachable',

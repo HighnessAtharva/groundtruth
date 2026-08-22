@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx groundtruth check --changed --json --quiet 2>/dev/null | node -e \"let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{let j;try{j=JSON.parse(s)}catch{process.exit(0)};if(!j.summary||!j.summary.blocking)process.exit(0);const lines=['groundtruth: '+j.summary.blocking+' blocking finding(s). Fix these before finishing.'];for(const d of j.documents)for(const f of d.findings.filter(x=>x.blocking))lines.push('  '+f.file+':'+(f.line||1)+'  '+f.rule+'  ['+(f.fix&&f.fix.kind)+']  '+f.message+(f.fix&&f.fix.instruction?'\n      fix: '+f.fix.instruction:''));console.error(lines.join('\n'));process.exit(2)})\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

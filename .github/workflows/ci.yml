@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm test
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+
+      # Every example ships a committed result.json. A change to the tool that
+      # alters what any example reports has to show up as a diff here, which makes
+      # the examples a regression suite rather than decoration.
+      - name: examples report what they are supposed to report
+        run: node scripts/verify-examples.mjs
+
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+
+      # The property the committed cache exists for. `check` must never touch the
+      # network, so a run with no resolver and no connection has to pass.
+      - name: every example verifies offline
+        run: node scripts/verify-examples.mjs --offline

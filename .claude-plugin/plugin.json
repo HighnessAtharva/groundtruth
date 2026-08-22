@@ -1,0 +1,10 @@
+{
+  "name": "groundtruth",
+  "version": "0.1.0",
+  "description": "Bind every factual claim in a document to a verbatim quote in a real source, then gate on it.",
+  "author": { "name": "Atharva Shah" },
+  "homepage": "https://github.com/HighnessAtharva/groundtruth#readme",
+  "repository": "https://github.com/HighnessAtharva/groundtruth",
+  "license": "MIT",
+  "keywords": ["fact-check", "citations", "provenance", "readability", "seo", "content-gate"]
+}

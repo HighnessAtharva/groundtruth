@@ -66,7 +66,7 @@ export async function buildEngine(config, { modules = null } = {}) {
   pipeline.add({
     id: 'discover',
     needs: ['config'],
-    run: (context) => discover(config, { only: context.only || [] }),
+    run: (context) => discover(config, { only: context.only || [], requireRoute: Boolean(context.requireRoute) }),
   });
 
   pipeline.add({

@@ -14,7 +14,16 @@ const ALWAYS_PRUNE = new Set(['.git', 'node_modules', '.groundtruth', '.next', '
  * @returns {Array<{ absolutePath: string, relativePath: string, profileName: string }>}
  *   in document order, first-match-wins against `config.documents`.
  */
-export function discover(config, { only = [] } = {}) {
+/**
+ * @param {object} options
+ * @param {string[]} [options.only]     explicit paths or globs
+ * @param {boolean} [options.requireRoute]
+ *   When true, an explicit path that matches no route is dropped instead of run
+ *   under the default profile. `--changed` sets this, because a machine-generated
+ *   file list contains everything the branch touched and most of it is not a
+ *   document. Without it, a changed `result.json` was checked as prose.
+ */
+export function discover(config, { only = [], requireRoute = false } = {}) {
   const root = config.root;
   const routes = (config.documents || []).map((route) => ({
     include: makeMatcher(route.include || ['**/*.md']),
@@ -22,7 +31,7 @@ export function discover(config, { only = [] } = {}) {
     profile: route.profile,
   }));
 
-  const explicit = only.length ? expandOnly(root, only) : null;
+  const explicit = only.length ? expandOnly(root, only, config) : null;
   const candidates = explicit ?? walk(root, root, config);
   const out = [];
 
@@ -31,7 +40,7 @@ export function discover(config, { only = [] } = {}) {
     const route = routes.find(
       (entry) => entry.include(normalized) && !(entry.exclude && entry.exclude(normalized)),
     );
-    if (!route && !explicit) continue;
+    if (!route && (!explicit || requireRoute)) continue;
     out.push({
       absolutePath: path.join(root, relativePath),
       relativePath: normalized,
@@ -44,24 +53,30 @@ export function discover(config, { only = [] } = {}) {
   return out;
 }
 
-function expandOnly(root, only) {
+function expandOnly(root, only, config) {
+  const extensions = new Set(config?.extensions || ['.md', '.mdx', '.markdown']);
   const out = [];
+
   for (const entry of only) {
     const absolute = path.isAbsolute(entry) ? entry : path.resolve(root, entry);
     if (existsSync(absolute)) {
       const stats = statSync(absolute);
       if (stats.isDirectory()) {
-        out.push(...walk(absolute, root, null).filter(Boolean));
+        out.push(...walk(absolute, root, config).filter(Boolean));
         continue;
       }
       out.push(path.relative(root, absolute));
       continue;
     }
-    // Not a real path, treat it as a glob against the tree.
+    // Not a real path, so treat it as a glob against the tree.
     const matcher = makeMatcher(entry.replace(/\\/g, '/'));
-    out.push(...walk(root, root, null).filter((candidate) => matcher(candidate)));
+    out.push(...walk(root, root, config).filter((candidate) => matcher(candidate)));
   }
-  return [...new Set(out.map((entry) => entry.replace(/\\/g, '/')))];
+
+  // An explicit path still has to be a document. Naming a PNG or a lockfile is a
+  // mistake worth ignoring quietly rather than parsing as prose.
+  return [...new Set(out.map((entry) => entry.replace(/\\/g, '/')))].filter((entry) =>
+    extensions.has(path.extname(entry).toLowerCase()));
 }
 
 function walk(dir, root, config) {

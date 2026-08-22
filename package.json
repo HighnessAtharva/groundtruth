@@ -6,21 +6,56 @@
   "license": "MIT",
   "author": "Atharva Shah",
   "homepage": "https://github.com/HighnessAtharva/groundtruth#readme",
-  "repository": { "type": "git", "url": "git+https://github.com/HighnessAtharva/groundtruth.git" },
-  "bugs": { "url": "https://github.com/HighnessAtharva/groundtruth/issues" },
-  "keywords": ["fact-check", "citations", "provenance", "readability", "seo", "aeo", "content-gate", "markdown"],
-  "engines": { "node": ">=20.11" },
-  "bin": { "groundtruth": "bin/groundtruth.mjs" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HighnessAtharva/groundtruth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HighnessAtharva/groundtruth/issues"
+  },
+  "keywords": [
+    "fact-check",
+    "citations",
+    "provenance",
+    "readability",
+    "seo",
+    "aeo",
+    "content-gate",
+    "markdown"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "bin": {
+    "groundtruth": "bin/groundtruth.mjs"
+  },
   "exports": {
     ".": "./src/index.mjs",
     "./presets": "./presets/index.mjs",
     "./adapters": "./src/adapters/index.mjs"
   },
-  "files": ["bin", "src", "presets", "README.md", "LICENSE"],
+  "files": [
+    "bin",
+    "src",
+    "presets",
+    "skills",
+    "commands",
+    "agents",
+    "hooks",
+    ".claude-plugin",
+    "AGENTS.md",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "node --test test/",
+    "test:examples": "node scripts/verify-examples.mjs",
+    "test:offline": "node scripts/verify-examples.mjs --offline",
+    "test:all": "npm test && npm run test:examples && npm run test:offline",
     "check": "node bin/groundtruth.mjs check",
     "report": "node bin/groundtruth.mjs report"
   },
-  "dependencies": { "yaml": "^2.5.1" }
+  "dependencies": {
+    "yaml": "^2.5.1"
+  }
 }
