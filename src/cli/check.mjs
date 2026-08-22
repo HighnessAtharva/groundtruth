@@ -232,10 +232,16 @@ function emptyPayload(config) {
   return {
     schemaVersion: 1,
     tool: { name: 'groundtruth', version },
-    run: { configPath: config.configPath, durationMs: 0, modules: {} },
+    run: { configPath: relativeConfig(config), durationMs: 0, modules: {} },
     summary: { documents: 0, blocking: 0, advisory: 0, bySeverity: { error: 0, warn: 0, info: 0 }, verdicts: {}, exitCode: 0 },
     documents: [],
   };
+}
+
+/** Machine output carries no absolute path, so a snapshot is not machine-specific. */
+function relativeConfig(config) {
+  const relative = path.relative(config.root, config.configPath).split(path.sep).join('/');
+  return relative || 'groundtruth.config.mjs';
 }
 
 function normalizeModules(flags) {
@@ -255,7 +261,9 @@ export function buildPayload({ config, result, active, durationMs }) {
     run: {
       startedAt: new Date(Date.now() - durationMs).toISOString(),
       durationMs,
-      configPath: config.configPath,
+      // An absolute path in machine output is noise, and committing one into a
+      // snapshot makes the snapshot machine-specific.
+      configPath: relativeConfig(config),
       modules: Object.fromEntries(
         ['grounding', 'readability', 'seo', 'style'].map((name) => [name, active.includes(name)]),
       ),

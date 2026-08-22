@@ -36,6 +36,11 @@ export function buildReport({ config, result, active }) {
     ? { css: '', js: '', cssHref: 'report.css', jsSrc: 'report.js' }
     : { css, js, cssHref: null, jsSrc: null };
 
+  // A local source permalink is relative to the project root. The report lives
+  // somewhere below it, so it supplies the hop back up and the link works from any
+  // machine rather than only from the one that generated it.
+  const toRoot = path.relative(dir, config.root).split(path.sep).join('/');
+
   const pages = [];
 
   for (const [index, entry] of result.documents.entries()) {
@@ -45,6 +50,7 @@ export function buildReport({ config, result, active }) {
       config,
       active,
       shell,
+      toRoot,
       previous: result.documents[index - 1],
       next: result.documents[index + 1],
       previousHref: result.documents[index - 1] ? `${slug(result.documents[index - 1].id)}.html` : null,
@@ -63,7 +69,7 @@ export function buildReport({ config, result, active }) {
   return { dir, indexPath: path.join(dir, 'index.html'), pages, linked };
 }
 
-function buildDocumentPage({ entry, config, active, shell, previousHref, nextHref }) {
+function buildDocumentPage({ entry, config, active, shell, toRoot, previousHref, nextHref }) {
   const doc = entry.doc;
   const annotationsByBlock = new Map();
   const spanData = {};
@@ -91,7 +97,7 @@ function buildDocumentPage({ entry, config, active, shell, previousHref, nextHre
       note: span.note || null,
       derivation: span.derivation || null,
       sourceLabel: span.sourceLabel || span.source || null,
-      permalink: span.permalink || null,
+      permalink: resolveLink(span.permalink, toRoot),
       lineUnconfirmed: Boolean(span.source && span.quote && span.located && !span.located.found),
     };
   }
@@ -191,6 +197,13 @@ function buildDocumentPage({ entry, config, active, shell, previousHref, nextHre
       risk,
     },
   };
+}
+
+/** Prefix a project-relative permalink with the hop from the report to the root. */
+function resolveLink(permalink, toRoot) {
+  if (!permalink) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(permalink)) return permalink;
+  return toRoot ? `${toRoot}/${permalink}` : permalink;
 }
 
 function push(map, key, value) {

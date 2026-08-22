@@ -5,9 +5,9 @@
     "version": "0.1.0"
   },
   "run": {
-    "startedAt": "2026-08-22T15:05:41.978Z",
-    "durationMs": 57,
-    "configPath": "D:\\Atharva\\groundtruth\\examples\\plimit-concurrency\\groundtruth.config.mjs",
+    "startedAt": "2026-08-22T15:51:31.075Z",
+    "durationMs": 67,
+    "configPath": "groundtruth.config.mjs",
     "modules": {
       "grounding": true,
       "readability": true,

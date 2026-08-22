@@ -297,13 +297,13 @@ test('the local adapter locates a quote that wraps across lines', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'gt-local-'));
   writeFileSync(
     path.join(root, 'notes.md'),
-    'line one\nAltimate Code connects to 13 databases\nnatively via TypeScript drivers.\nlast line\n',
+    'line one\nThe driver layer connects to 13 databases\nnatively via generated TypeScript clients.\nlast line\n',
     'utf8',
   );
   const adapter = local({ id: 'notes', root }).bind(root);
   const ref = parseRef('notes:notes.md');
   const resolved = await adapter.resolve(ref);
-  const located = adapter.locate(resolved, 'connects to 13 databases natively via TypeScript drivers');
+  const located = adapter.locate(resolved, 'connects to 13 databases natively via generated TypeScript clients');
   assert.equal(located.found, true);
   assert.equal(located.line, 2);
   assert.equal(located.confidence, 'normalized');

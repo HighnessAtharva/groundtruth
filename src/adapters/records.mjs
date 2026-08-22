@@ -19,11 +19,13 @@ import { parse as parseYaml } from 'yaml';
 import { sha256 } from '../core/hash.mjs';
 import { collapse, locateQuote } from '../core/text.mjs';
 import { parseFragment } from './index.mjs';
+import { projectRelative } from './local.mjs';
 
 export function records(options = {}) {
   const id = options.id || 'records';
   const keyColumn = options.key || null;
   let file = options.file;
+  let projectRoot = null;
   let loaded = null;
 
   const load = (absolute) => {
@@ -62,6 +64,7 @@ export function records(options = {}) {
 
     bind(configDir) {
       file = path.resolve(configDir, options.file);
+      projectRoot = configDir;
       return this;
     },
 
@@ -187,7 +190,8 @@ export function records(options = {}) {
     },
 
     permalink(ref, located) {
-      const base = pathToFileURL(this.file).href;
+      // Project-relative, so a committed report works on any machine. See local.mjs.
+      const base = projectRelative(this.file, projectRoot || path.dirname(this.file));
       return located?.line ? `${base}#L${located.line}` : base;
     },
 

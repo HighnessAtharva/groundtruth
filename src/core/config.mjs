@@ -5,10 +5,10 @@
 // language. Validation is hand-written so the error messages can say what to do
 // rather than printing a JSON Schema path.
 //
-// Nothing here resolves an absolute path from a constant. The harness this came
-// from hardcodes `ROOT = r"D:\...\Altimate"` in a file meant to run anywhere,
-// which is the single worst portability defect in it. Every path resolves from
-// the directory the config file sits in.
+// Nothing here resolves an absolute path from a constant. The harness this was
+// extracted from hardcodes an absolute Windows path in a file meant to run
+// anywhere, which is its single worst portability defect. Every path here resolves
+// from the directory the config file sits in.
 
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';

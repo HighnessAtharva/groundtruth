@@ -29,7 +29,7 @@ test('the amber floor sits low enough to catch a compound sentence with a list',
   // At a threshold of 10 this scored 8.4 and passed. The floor moved to 8
   // precisely so this shape gets caught.
   const sentence =
-    'The other half is Cortex, and Altimate Lite now splits your Cortex AI bill by service, user, and model on the same install.';
+    'The other half is the cache layer, and Redis now splits your storage bill by request, user, and region on the same install.';
   const result = scorer.score(sentence);
   assert.ok(result, 'a second independent clause plus a list should not pass');
 });

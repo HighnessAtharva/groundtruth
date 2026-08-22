@@ -22,6 +22,7 @@ export function local(options = {}) {
   const include = options.include || ['**/*.md', '**/*.txt', '**/*.markdown'];
   const matcher = makeMatcher(include);
   let root = options.root || '.';
+  let projectRoot = null;
   const cache = new Map();
 
   return {
@@ -31,6 +32,9 @@ export function local(options = {}) {
     /** Resolve `root` against the config directory, never against the cwd. */
     bind(configDir) {
       root = path.resolve(configDir, options.root || '.');
+      // The config directory is the project root, and a permalink relative to it is
+      // the only form the report can resolve from its own directory.
+      projectRoot = configDir;
       return this;
     },
 
@@ -98,11 +102,18 @@ export function local(options = {}) {
       };
     },
 
+    /**
+     * A project-relative path, not a file:// URL.
+     *
+     * An absolute file:// URL only works on the machine that produced it, so a
+     * committed report carried dead links for everybody else and leaked the
+     * author's directory layout. The report resolves this against its own location.
+     */
     permalink(ref, located, pin) {
       const file = path.resolve(this.root, ref.path);
       const hinted = parseFragment(ref.fragment).line;
       const line = located?.line ?? hinted ?? null;
-      const base = pathToFileURL(file).href;
+      const base = projectRelative(file, projectRoot || this.root);
       return line ? `${base}#L${line}` : base;
     },
 
@@ -131,6 +142,21 @@ function walk(dir, root) {
     out.push(path.relative(root, full).replace(/\\/g, '/'));
   }
   return out;
+}
+
+/**
+ * A path relative to `from`, with forward slashes.
+ *
+ * Falls back to an absolute file:// URL only when the file sits outside the
+ * project, where there is nothing to be relative to.
+ */
+export function projectRelative(absolute, from) {
+  const base = from || process.cwd();
+  const relative = path.relative(base, absolute);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    return pathToFileURL(absolute).href;
+  }
+  return relative.split(path.sep).join('/');
 }
 
 function withinRoot(candidate, root) {
