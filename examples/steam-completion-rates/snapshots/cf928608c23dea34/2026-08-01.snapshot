@@ -1,0 +1,14 @@
+--- groundtruth snapshot ---
+url: https://example.com/notes/first-hour-retention
+capturedAt: 2026-08-01T09:00:00.000Z
+contentHash: 95b35efebfb034dc0fcce5bcc4bb5fc3e27ea2875b7897d187508dedc5132bc1
+httpStatus: 200
+synthetic: true
+
+Notes on first-hour retention
+
+This note has been rewritten. The earlier version named the second achievement
+as the strongest predictor of completion. That claim was withdrawn after a
+larger sample failed to reproduce it.
+
+Every figure in this note is synthetic and exists to demonstrate a tool.

@@ -83,10 +83,13 @@ export function parseFragment(fragment) {
 }
 
 export class AdapterRegistry {
-  constructor(sources = []) {
+  constructor(sources = [], { configDir = null, cache = null } = {}) {
     this.adapters = new Map();
+    this.cache = cache;
     for (const source of sources) {
       validateAdapter(source);
+      if (configDir && source.bind) source.bind(configDir);
+      if (cache && source.attachCache) source.attachCache(cache);
       this.adapters.set(source.id, source);
     }
   }
@@ -118,18 +121,44 @@ export class AdapterRegistry {
     return null;
   }
 
-  async pinAll({ refresh = false, lock = {} } = {}) {
+  /**
+   * Restore pins from the lockfile, or move them.
+   *
+   * `check` never passes refresh, so it never touches the network and verifies
+   * against the revision the lockfile names. Only `resolve --refresh` moves a pin,
+   * and a moved pin shows up as a diff a reviewer can see.
+   */
+  async pinAll({ refresh = false, lock = {}, only = null } = {}) {
     const pins = {};
+    const previous = {};
     for (const adapter of this.adapters.values()) {
-      if (!refresh && lock[adapter.id]) {
-        adapter.usePin?.(lock[adapter.id]);
-        pins[adapter.id] = lock[adapter.id];
+      const locked = lock[adapter.id];
+      const wanted = refresh && (!only || only.includes(adapter.id));
+
+      if (!wanted && locked) {
+        adapter.usePin?.(locked);
+        pins[adapter.id] = locked;
         continue;
       }
-      pins[adapter.id] = adapter.pin ? await adapter.pin() : { id: adapter.id, kind: adapter.kind || 'unknown' };
+      if (!wanted && !locked && !refresh) {
+        // No pin yet and no refresh asked for. A local folder or a table can pin
+        // itself with no network, so try, and fall back to unpinned.
+        try {
+          pins[adapter.id] = adapter.pin ? await adapter.pin() : unpinned(adapter);
+        } catch {
+          pins[adapter.id] = unpinned(adapter);
+        }
+        continue;
+      }
+      if (locked) previous[adapter.id] = locked;
+      pins[adapter.id] = adapter.pin ? await adapter.pin() : unpinned(adapter);
     }
-    return pins;
+    return { pins, previous };
   }
+}
+
+function unpinned(adapter) {
+  return { id: adapter.id, kind: adapter.kind || 'unknown', at: null, meta: {} };
 }
 
 export function validateAdapter(source) {
@@ -147,3 +176,6 @@ export function validateAdapter(source) {
 }
 
 export { local } from './local.mjs';
+export { git } from './git.mjs';
+export { web } from './web.mjs';
+export { records, parseDelimited } from './records.mjs';

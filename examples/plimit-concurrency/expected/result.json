@@ -1,0 +1,792 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "groundtruth",
+    "version": "0.1.0"
+  },
+  "run": {
+    "startedAt": "2026-08-22T14:49:52.995Z",
+    "durationMs": 56,
+    "configPath": "D:\\Atharva\\groundtruth\\examples\\plimit-concurrency\\groundtruth.config.mjs",
+    "modules": {
+      "grounding": true,
+      "readability": true,
+      "seo": true,
+      "style": false
+    }
+  },
+  "summary": {
+    "documents": 1,
+    "blocking": 6,
+    "advisory": 20,
+    "bySeverity": {
+      "error": 6,
+      "warn": 11,
+      "info": 9
+    },
+    "verdicts": {
+      "VERIFIED": 9,
+      "INFERRED": 1,
+      "CONTRADICTED": 1,
+      "UNSOURCED": 1
+    },
+    "exitCode": 1
+  },
+  "documents": [
+    {
+      "path": "article/counter-and-queue.md",
+      "id": "article-counter-and-queue",
+      "profile": "technical",
+      "counts": {
+        "error": 6,
+        "warn": 11,
+        "info": 9,
+        "off": 0,
+        "blocking": 6,
+        "advisory": 20,
+        "total": 26
+      },
+      "stats": {
+        "hard": 4,
+        "tough": 9,
+        "images": 0,
+        "words": 755,
+        "h2s": 5,
+        "faqs": 0,
+        "tables": 0,
+        "internalLinks": 0,
+        "externalLinks": 0,
+        "seoScore": 79,
+        "seoBand": "ok",
+        "spans": 12,
+        "grounded": 11
+      },
+      "findings": [
+        {
+          "id": "GT-SEO-001",
+          "rule": "seo.len-meta",
+          "module": "seo",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "Meta description length: 226 characters, over 165",
+          "why": "Under the floor the snippet reads thin",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "fail",
+            "group": "snippet"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut 61 characters or it gets truncated in the results page.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-002",
+          "rule": "seo.faq-present",
+          "module": "seo",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "FAQ block present: no FAQ block",
+          "why": "The FAQ block is what FAQPage structured data is generated from",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "fail",
+            "group": "aeo"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Add a heading matching the FAQ pattern, then question and answer pairs. FAQPage structured data is generated from it.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-001",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/counter-and-queue.md",
+          "line": 45,
+          "column": null,
+          "endLine": 45,
+          "message": "Contradicted: \"Tasks resolve in the order they were queued\"",
+          "why": "A source you named disagrees with this claim. One of the two is wrong and the tool cannot tell which.",
+          "excerpt": "Each call resolves when its own task settles, so completion order follows duration and not queue order. Only the map helper preserves input order, and it does that with Promise.all rather than with the queue.",
+          "evidence": null,
+          "data": {
+            "verdict": "CONTRADICTED",
+            "spanMap": "groundtruth/spans/article-counter-and-queue.mjs",
+            "spanIndex": 6
+          },
+          "fix": {
+            "kind": "decision",
+            "instruction": "A source disagrees with this claim. Read both and decide which is wrong. Note on file: Each call resolves when its own task settles, so completion order follows duration and not queue order. Only the map helper preserves input order, and it does that with Promise.all rather than with the queue.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-003",
+          "rule": "seo.fence-language",
+          "module": "seo",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/counter-and-queue.md",
+          "line": 47,
+          "column": null,
+          "endLine": 47,
+          "message": "Fenced code has a language: 1 untagged fence(s) at line 47",
+          "why": "An untagged code fence is skipped by search and answer engines and cannot be syntax highlighted",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "fail",
+            "group": "aeo"
+          },
+          "fix": {
+            "kind": "edit",
+            "instruction": "Add a language tag to the opening fence.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-002",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/counter-and-queue.md",
+          "line": 57,
+          "column": null,
+          "endLine": 57,
+          "message": "No source found: \"Most teams set the limit to the number of CPU cores\"",
+          "why": "Nothing in the declared sources supports this claim. Either find a source or cut the sentence.",
+          "excerpt": "A claim about what other people do, in an article that only read one file. Cut it or cite a survey.",
+          "evidence": null,
+          "data": {
+            "verdict": "UNSOURCED",
+            "spanMap": "groundtruth/spans/article-counter-and-queue.mjs",
+            "spanIndex": 11
+          },
+          "fix": {
+            "kind": "source",
+            "instruction": "Find a source that says this, or cut the sentence. Do not mark it VERIFIED without a quote.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-004",
+          "rule": "seo.h2-vague",
+          "module": "seo",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/counter-and-queue.md",
+          "line": 59,
+          "column": null,
+          "endLine": 59,
+          "message": "No vague H2: 1 vague heading(s): \"Conclusion\"",
+          "why": "A heading reading \"Conclusion\" or \"Why it matters\" carries no query",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "fail",
+            "group": "headings"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Say what the section concludes, not that it is the conclusion.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-005",
+          "rule": "seo.body-floor",
+          "module": "seo",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "Body length floor: 755 words, under the 900 floor",
+          "why": "Under the floor the page is probably thin",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "warn",
+            "group": "snippet"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Add substance, never padding. This never blocks for exactly that reason.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-006",
+          "rule": "seo.h2-shape",
+          "module": "seo",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "H2 length: 1 H2 outside 3 to 14 words: \"Conclusion\"",
+          "why": "A one-word H2 is a label and a fifteen-word H2 is a sentence",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "warn",
+            "group": "headings"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Write each heading as the answer to one question.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-007",
+          "rule": "seo.img-count",
+          "module": "seo",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "Images present: no images",
+          "why": "A long page with no figure is a wall of text",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "warn",
+            "group": "media"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "A long page with no figure is a wall of text.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-008",
+          "rule": "seo.table-present",
+          "module": "seo",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "Real tables, not screenshots: no tables",
+          "why": "A comparison rendered as a table can be lifted",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "warn",
+            "group": "media"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "A comparison rendered as a table can be lifted. A screenshot of one cannot be read.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-009",
+          "rule": "seo.links-internal",
+          "module": "seo",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "Internal links: 0 internal link(s)",
+          "why": "A page with no internal links is an orphan, and passage authority does not compound across a set of pages that do not point at each other.",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "warn",
+            "group": "media"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Under 2. A page nothing points at and that points at nothing is an orphan.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-SEO-010",
+          "rule": "seo.links-external",
+          "module": "seo",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "External links: 0 external link(s)",
+          "why": "Outbound links to a source are how a reader checks you",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "status": "warn",
+            "group": "media"
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Under 3. Link the sources a reader would want to check.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-001",
+          "rule": "read.hard",
+          "module": "readability",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 14,
+          "column": null,
+          "endLine": 14,
+          "message": "Hard to read (27): 34 words, 12 over the 22-word budget, 4 clause breaks stacked in one sentence",
+          "why": "A sentence scoring at or above the hard threshold. Every signal that contributes is something a writer can fix by rewriting, which is why this is not a reading grade. Flesch-Kincaid is dominated by syllables per word, so on technical prose it flags every sentence containing \"configuration\" and stays quiet on a 40-word sentence of short words.",
+          "excerpt": "It sits in almost every Node dependency tree and almost nobody has opened it, which is a shame, because reading it takes ten minutes and it changes how you write every batch job afterwards.",
+          "evidence": null,
+          "data": {
+            "score": 27,
+            "words": 34,
+            "band": "hard",
+            "signals": [
+              "length",
+              "clauses"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-002",
+          "rule": "read.hard",
+          "module": "readability",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 22,
+          "column": null,
+          "endLine": 22,
+          "message": "Hard to read (27): 33 words, 11 over the 22-word budget, 3 clause breaks stacked in one sentence, two independent clauses welded with a coordinator",
+          "why": "A sentence scoring at or above the hard threshold. Every signal that contributes is something a writer can fix by rewriting, which is why this is not a reading grade. Flesch-Kincaid is dominated by syllables per word, so on technical prose it flags every sentence containing \"configuration\" and stays quiet on a 40-word sentence of short words.",
+          "excerpt": "That mover is the load-bearing piece, and it runs a single check: if the counter is under the limit and the queue is not empty, increment the counter and start the next item.",
+          "evidence": null,
+          "data": {
+            "score": 27,
+            "words": 33,
+            "band": "hard",
+            "signals": [
+              "length",
+              "clauses",
+              "fused"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-003",
+          "rule": "read.hard",
+          "module": "readability",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 32,
+          "column": null,
+          "endLine": 32,
+          "message": "Hard to read (39): 34 words, 12 over the 22-word budget, 3 clause breaks stacked in one sentence, passive voice, 2 verbs buried inside nouns, two independent clauses welded with a coordinator",
+          "why": "A sentence scoring at or above the hard threshold. Every signal that contributes is something a writer can fix by rewriting, which is why this is not a reading grade. Flesch-Kincaid is dominated by syllables per word, so on technical prose it flags every sentence containing \"configuration\" and stays quiet on a 40-word sentence of short words.",
+          "excerpt": "The limiter awaits the result inside a try with an empty catch, and the comment explains the reasoning: catching there prevents an unhandled rejection while the original promise rejection is preserved for the caller.",
+          "evidence": null,
+          "data": {
+            "score": 39,
+            "words": 34,
+            "band": "hard",
+            "signals": [
+              "length",
+              "clauses",
+              "passive",
+              "nominalization",
+              "fused"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-004",
+          "rule": "read.hard",
+          "module": "readability",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 41,
+          "column": null,
+          "endLine": 41,
+          "message": "Hard to read (19): 29 words, 7 over the 22-word budget, 2 verbs buried inside nouns, two independent clauses welded with a coordinator",
+          "why": "A sentence scoring at or above the hard threshold. Every signal that contributes is something a writer can fix by rewriting, which is why this is not a reading grade. Flesch-Kincaid is dominated by syllables per word, so on technical prose it flags every sentence containing \"configuration\" and stays quiet on a 40-word sentence of short words.",
+          "excerpt": "The factory returns a fresh closure with its own counter, so a limiter created per iteration gives every iteration its own budget and the cap does nothing at all.",
+          "evidence": null,
+          "data": {
+            "score": 19,
+            "words": 29,
+            "band": "hard",
+            "signals": [
+              "length",
+              "nominalization",
+              "fused"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-003",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 41,
+          "column": null,
+          "endLine": 41,
+          "message": "Inferred: \"The factory returns a fresh closure with its own counter, so a limite…\"",
+          "why": "This claim was computed rather than quoted, so the derivation is the thing a reader has to trust.",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "verdict": "INFERRED",
+            "spanMap": "groundtruth/spans/article-counter-and-queue.mjs",
+            "spanIndex": 5
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Check the derivation still holds against the current source records.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-005",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 16,
+          "column": null,
+          "endLine": 16,
+          "message": "Slow going (16): 28 words, 6 over the 22-word budget, two independent clauses welded with a coordinator, 2 clause breaks stacked in one sentence",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "Click any highlighted claim in the report and it opens the line on GitHub at that exact SHA, so you can check this article rather than trust it.",
+          "evidence": null,
+          "data": {
+            "score": 16,
+            "words": 28,
+            "band": "tough",
+            "signals": [
+              "length",
+              "fused",
+              "clauses"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-006",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 20,
+          "column": null,
+          "endLine": 20,
+          "message": "Slow going (10): 29 words, 7 over the 22-word budget",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "A queue sits beside it holding calls that have not started, and one function exists to move an item from the queue into the counter when there is room.",
+          "evidence": null,
+          "data": {
+            "score": 10,
+            "words": 29,
+            "band": "tough",
+            "signals": [
+              "length"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-007",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 24,
+          "column": null,
+          "endLine": 24,
+          "message": "Slow going (11): 3 clause breaks stacked in one sentence, 25 words, 3 over the 22-word budget",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "The usual bug is a counter that decrements on success and not on failure, which leaks a slot per error until the whole thing wedges.",
+          "evidence": null,
+          "data": {
+            "score": 11,
+            "words": 25,
+            "band": "tough",
+            "signals": [
+              "clauses",
+              "length"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Give each clause its own sentence, or turn the list of them into bullets.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-008",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 30,
+          "column": null,
+          "endLine": 30,
+          "message": "Slow going (12): 27 words, 5 over the 22-word budget, two independent clauses welded with a coordinator",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "Collapsing them into one is the mistake most hand-rolled versions make, and it is why the hand-rolled version usually cannot report how many tasks are in flight.",
+          "evidence": null,
+          "data": {
+            "score": 12,
+            "words": 27,
+            "band": "tough",
+            "signals": [
+              "length",
+              "fused"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-009",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 53,
+          "column": null,
+          "endLine": 53,
+          "message": "Slow going (13): passive voice, two independent clauses welded with a coordinator, 2 clause breaks stacked in one sentence",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "Changing the limit while work is in flight is supported, and it drains correctly.",
+          "evidence": null,
+          "data": {
+            "score": 13,
+            "words": 14,
+            "band": "tough",
+            "signals": [
+              "passive",
+              "fused",
+              "clauses"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Name the thing doing the work and put it in front of the verb.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-010",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 53,
+          "column": null,
+          "endLine": 53,
+          "message": "Slow going (13): 29 words, 7 over the 22-word budget, 2 clause breaks stacked in one sentence",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "Raising the limit halfway through a run starts more work without a restart, which matters when the thing you are rate-limiting turns out to tolerate more than you guessed.",
+          "evidence": null,
+          "data": {
+            "score": 13,
+            "words": 29,
+            "band": "tough",
+            "signals": [
+              "length",
+              "clauses"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-011",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 55,
+          "column": null,
+          "endLine": 55,
+          "message": "Slow going (14): 3 clause breaks stacked in one sentence, two independent clauses welded with a coordinator, 24 words, 2 over the 22-word budget",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "It accepts an integer or positive infinity, and only above zero, and the error message is exact: it expects a number from 1 and up.",
+          "evidence": null,
+          "data": {
+            "score": 14,
+            "words": 24,
+            "band": "tough",
+            "signals": [
+              "clauses",
+              "fused",
+              "length"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Give each clause its own sentence, or turn the list of them into bullets.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-012",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 57,
+          "column": null,
+          "endLine": 57,
+          "message": "Slow going (14): 32 words, 10 over the 22-word budget",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "There is also a helper on the returned function that runs an iterable through the limiter and collects with Promise.all, so ordered results are one call away when you want them.",
+          "evidence": null,
+          "data": {
+            "score": 14,
+            "words": 32,
+            "band": "tough",
+            "signals": [
+              "length"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-013",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/counter-and-queue.md",
+          "line": 61,
+          "column": null,
+          "endLine": 61,
+          "message": "Slow going (9): two independent clauses welded with a coordinator, 25 words, 3 over the 22-word budget",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "It is shorter than the wrapper you were about to write around it, and the two lines in the middle are the ones worth stealing.",
+          "evidence": null,
+          "data": {
+            "score": 9,
+            "words": 25,
+            "band": "tough",
+            "signals": [
+              "fused",
+              "length"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Put a full stop where the comma is. Each half is already a sentence.",
+            "confidence": "medium"
+          },
+          "docs": null
+        }
+      ]
+    }
+  ]
+}

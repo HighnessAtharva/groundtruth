@@ -54,6 +54,7 @@ export async function buildEngine(config, { modules = null } = {}) {
 
   validateSeverity(config);
 
+
   const pipeline = new Pipeline();
 
   pipeline.add({

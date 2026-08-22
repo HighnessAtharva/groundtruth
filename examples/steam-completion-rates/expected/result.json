@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "groundtruth",
+    "version": "0.1.0"
+  },
+  "run": {
+    "startedAt": "2026-08-22T14:55:23.557Z",
+    "durationMs": 55,
+    "configPath": "D:\\Atharva\\groundtruth\\examples\\steam-completion-rates\\groundtruth.config.mjs",
+    "modules": {
+      "grounding": true,
+      "readability": true,
+      "seo": false,
+      "style": false
+    }
+  },
+  "summary": {
+    "documents": 1,
+    "blocking": 4,
+    "advisory": 7,
+    "bySeverity": {
+      "error": 4,
+      "warn": 3,
+      "info": 4
+    },
+    "verdicts": {
+      "VERIFIED": 7,
+      "INFERRED": 1,
+      "CONTRADICTED": 1,
+      "STALE": 1,
+      "FIGURE": 1,
+      "UNSOURCED": 1
+    },
+    "exitCode": 1
+  },
+  "documents": [
+    {
+      "path": "article/nobody-finishes-these.md",
+      "id": "article-nobody-finishes-these",
+      "profile": "dataStory",
+      "counts": {
+        "error": 4,
+        "warn": 3,
+        "info": 4,
+        "off": 0,
+        "blocking": 4,
+        "advisory": 7,
+        "total": 11
+      },
+      "stats": {
+        "hard": 1,
+        "tough": 3,
+        "images": 3,
+        "words": 402,
+        "spans": 11,
+        "grounded": 9
+      },
+      "findings": [
+        {
+          "id": "GT-READ-001",
+          "rule": "read.alt-generic",
+          "module": "readability",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/nobody-finishes-these.md",
+          "line": 32,
+          "column": null,
+          "endLine": 32,
+          "message": "alt text names the file type instead of describing the picture: \"chart\"",
+          "why": "Alt text reading \"chart\" or \"screenshot 2\" names the file type instead of describing the picture, which helps nobody and tells a reviewer nothing about whether the picture is right.",
+          "excerpt": "![chart](images/second-achievement-drop.svg)",
+          "evidence": null,
+          "data": null,
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Say what is in the picture. \"Completion rate falling off past ten hours\" beats \"chart\".",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-001",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/nobody-finishes-these.md",
+          "line": 34,
+          "column": null,
+          "endLine": 34,
+          "message": "Contradicted: \"Harrow Line has no tutorial and its first fight starts at four minutes\"",
+          "why": "A source you named disagrees with this claim. One of the two is wrong and the tool cannot tell which.",
+          "excerpt": "catalog/games.json records has_tutorial as true for Harrow Line, while completion-table.csv notes \"no tutorial, first fight at 4 minutes\". The two source records disagree with each other, so the article cannot be right by accident. Reconcile the records first.",
+          "evidence": null,
+          "data": {
+            "verdict": "CONTRADICTED",
+            "spanMap": "groundtruth/spans/article-nobody-finishes-these.mjs",
+            "spanIndex": 7
+          },
+          "fix": {
+            "kind": "decision",
+            "instruction": "A source disagrees with this claim. Read both and decide which is wrong. Note on file: catalog/games.json records has_tutorial as true for Harrow Line, while completion-table.csv notes \"no tutorial, first fight at 4 minutes\". The two source records disagree with each other, so the article cannot be right by accident. Reconcile the records first.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-002",
+          "rule": "read.image-missing",
+          "module": "readability",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/nobody-finishes-these.md",
+          "line": 40,
+          "column": null,
+          "endLine": 40,
+          "message": "image is referenced but not on disk: images/first-hour-funnel.png",
+          "why": "An image referenced in prose that is not on disk renders as a broken box for every reader. This has exactly one right answer, so it blocks.",
+          "excerpt": "![the funnel from install to second achievement to completion, three bars](images/first-hour-funnel.png)",
+          "evidence": null,
+          "data": null,
+          "fix": {
+            "kind": "source",
+            "instruction": "Add the file, or fix the path. Looked in: ., public, static",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-002",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "error",
+          "blocking": true,
+          "file": "article/nobody-finishes-these.md",
+          "line": 48,
+          "column": null,
+          "endLine": 48,
+          "message": "No source found: \"Players abandon most games in the first twenty minutes\"",
+          "why": "Nothing in the declared sources supports this claim. Either find a source or cut the sentence.",
+          "excerpt": "A sweeping claim about all players, in a piece about twelve invented titles. Cut it.",
+          "evidence": null,
+          "data": {
+            "verdict": "UNSOURCED",
+            "spanMap": "groundtruth/spans/article-nobody-finishes-these.mjs",
+            "spanIndex": 10
+          },
+          "fix": {
+            "kind": "source",
+            "instruction": "Find a source that says this, or cut the sentence. Do not mark it VERIFIED without a quote.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-003",
+          "rule": "ground.verdict",
+          "module": "grounding",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 20,
+          "column": null,
+          "endLine": 20,
+          "message": "Inferred: \"Games under six hours finish at roughly triple the rate of games over…\"",
+          "why": "This claim was computed rather than quoted, so the derivation is the thing a reader has to trust.",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "verdict": "INFERRED",
+            "spanMap": "groundtruth/spans/article-nobody-finishes-these.mjs",
+            "spanIndex": 4
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Check the derivation still holds against the current source records.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-GROU-004",
+          "rule": "ground.stale",
+          "module": "grounding",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 38,
+          "column": null,
+          "endLine": 38,
+          "message": "the page no longer contains this quote: was present, now absent",
+          "why": "The source changed between 2026-03-14 and 2026-08-01. The claim was true when it was written.",
+          "excerpt": null,
+          "evidence": null,
+          "data": {
+            "spanMap": "groundtruth/spans/article-nobody-finishes-these.mjs",
+            "spanIndex": 8,
+            "drift": {
+              "stale": true,
+              "reason": "the page no longer contains this quote",
+              "from": "2026-03-14",
+              "to": "2026-08-01",
+              "was": "present",
+              "now": "absent"
+            }
+          },
+          "fix": {
+            "kind": "decision",
+            "instruction": "Read what the source says now. Either the claim needs updating or the pin does.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-003",
+          "rule": "read.hard",
+          "module": "readability",
+          "severity": "warn",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 46,
+          "column": null,
+          "endLine": 46,
+          "message": "Hard to read (30): 4 clause breaks stacked in one sentence, 28 words, 6 over the 22-word budget, passive voice, 2 verbs buried inside nouns",
+          "why": "A sentence scoring at or above the hard threshold. Every signal that contributes is something a writer can fix by rewriting, which is why this is not a reading grade. Flesch-Kincaid is dominated by syllables per word, so on technical prose it flags every sentence containing \"configuration\" and stays quiet on a 40-word sentence of short words.",
+          "excerpt": "Every number here is invented for the purpose of demonstrating a verification tool, which is a fact stated in the frontmatter, in the provenance file, and now here.",
+          "evidence": null,
+          "data": {
+            "score": 30,
+            "words": 28,
+            "band": "hard",
+            "signals": [
+              "clauses",
+              "length",
+              "passive",
+              "nominalization"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Give each clause its own sentence, or turn the list of them into bullets.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-004",
+          "rule": "read.needs-human-pass",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 1,
+          "column": null,
+          "endLine": 1,
+          "message": "3 image(s) need a look by a person. Text checks cannot read pixels.",
+          "why": "A text checker reads alt text and filenames. It does not read pixels, so it cannot tell you a chart is wrong. Saying so once per document keeps a person in the loop on the part the tool structurally cannot cover.",
+          "excerpt": null,
+          "evidence": null,
+          "data": null,
+          "fix": {
+            "kind": "decision",
+            "instruction": "Open each image and confirm it shows what the prose claims it shows.",
+            "confidence": "low"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-005",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 10,
+          "column": null,
+          "endLine": 10,
+          "message": "Slow going (11): passive voice, two independent clauses welded with a coordinator",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "The gap between the two is enormous, and it is not explained by the thing everybody assumes explains it.",
+          "evidence": null,
+          "data": {
+            "score": 11,
+            "words": 19,
+            "band": "tough",
+            "signals": [
+              "passive",
+              "fused"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Name the thing doing the work and put it in front of the verb.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-006",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 28,
+          "column": null,
+          "endLine": 28,
+          "message": "Slow going (10): 26 words, 4 over the 22-word budget, two independent clauses welded with a coordinator",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "Ashfall Reach puts 92.1 percent past the first achievement and only 44 percent past the second, and the note on that row says its systems tutorial runs 90 minutes.",
+          "evidence": null,
+          "data": {
+            "score": 10,
+            "words": 26,
+            "band": "tough",
+            "signals": [
+              "length",
+              "fused"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Cut it into two sentences at the first natural break.",
+            "confidence": "medium"
+          },
+          "docs": null
+        },
+        {
+          "id": "GT-READ-007",
+          "rule": "read.tough",
+          "module": "readability",
+          "severity": "info",
+          "blocking": false,
+          "file": "article/nobody-finishes-these.md",
+          "line": 38,
+          "column": null,
+          "endLine": 38,
+          "message": "Slow going (12): 3 clause breaks stacked in one sentence, the subject arrives 5 words in, behind an opener, 4 of 18 words run three syllables or more",
+          "why": "A sentence scoring at or above the amber threshold. The threshold sits at 8 rather than 10 because at 10 a compound sentence carrying a second independent clause and a list scored 8.4 and passed, and that is exactly the shape worth splitting.",
+          "excerpt": "If you are shipping something, the actionable version is blunt: whatever your second achievement is, move it earlier.",
+          "evidence": null,
+          "data": {
+            "score": 12,
+            "words": 18,
+            "band": "tough",
+            "signals": [
+              "clauses",
+              "frontLoaded",
+              "jargon"
+            ]
+          },
+          "fix": {
+            "kind": "rewrite",
+            "instruction": "Give each clause its own sentence, or turn the list of them into bullets.",
+            "confidence": "medium"
+          },
+          "docs": null
+        }
+      ]
+    }
+  ]
+}

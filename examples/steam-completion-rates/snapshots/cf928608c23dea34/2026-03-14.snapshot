@@ -1,0 +1,14 @@
+--- groundtruth snapshot ---
+url: https://example.com/notes/first-hour-retention
+capturedAt: 2026-03-14T09:00:00.000Z
+contentHash: 5426d876f92fbdf252411f4c3fa59f7ee920c8c946b217c0fe3431bf6e56eb2b
+httpStatus: 200
+synthetic: true
+
+Notes on first-hour retention
+
+Across the twelve titles in this sample, the strongest single predictor of
+completion was the share of owners who earned the second achievement.
+Length correlated weakly and inconsistently.
+
+Every figure in this note is synthetic and exists to demonstrate a tool.

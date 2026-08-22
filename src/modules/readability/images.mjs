@@ -176,6 +176,14 @@ export function numberConflictFindings(doc, settings) {
   return out;
 }
 
+/**
+ * Numbers in an image's own description, from digits only.
+ *
+ * A spelled-out number in alt text is nearly always describing the picture rather
+ * than a value in it: "three bars", "two panels", "four quadrants". Counting those
+ * made this rule fire on almost every chart caption, so the comparison runs on
+ * digits and fractions, which is where a data label actually lives.
+ */
 function numbersIn(text) {
   const found = new Set();
   for (const match of String(text).matchAll(FRACTION)) {
@@ -185,11 +193,9 @@ function numbersIn(text) {
   for (const match of String(text).matchAll(INTEGER)) {
     found.add(Number(match[1]));
   }
-  for (const [word, value] of Object.entries(WORD_NUMBERS)) {
-    if (new RegExp(`\\b${word}\\b`, 'i').test(text)) found.add(value);
-  }
   return found;
 }
+
 
 export function humanPassFinding(doc, settings) {
   if (!settings.alwaysAdviseHumanPass) return [];

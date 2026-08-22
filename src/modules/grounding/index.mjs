@@ -8,6 +8,8 @@ import path from 'node:path';
 import { defineRule, resolveSeverity } from '../../core/rules.mjs';
 import { normalizeFinding } from '../../core/findings.mjs';
 import { similarity } from '../../core/text.mjs';
+import { Cache } from '../../core/cache.mjs';
+import { readLockfile, comparePins } from '../../core/lockfile.mjs';
 import { AdapterRegistry, parseRef } from '../../adapters/index.mjs';
 import { loadSpanMaps } from './spanmap.mjs';
 import { verifySpan, lineOfPlacement, suggestMatch } from './verify.mjs';
@@ -54,6 +56,22 @@ export const rules = [
     run() {},
   }),
   defineRule({
+    id: 'ground.stale',
+    module: 'grounding',
+    mechanical: true,
+    defaultSeverity: 'warn',
+    explain: 'The source moved under a claim that used to hold. The tool derives this and an author cannot write it, because a claim cannot know it has gone stale. Two mechanisms produce it: a pinned revision moved and the quote is no longer where it was, or a newer capture of a page no longer contains the quote.',
+    run() {},
+  }),
+  defineRule({
+    id: 'ground.pin-moved',
+    module: 'grounding',
+    mechanical: true,
+    defaultSeverity: 'off',
+    explain: 'A source pin differs from the lockfile. Off by default and turned on by `check --frozen`, which is the CI mode: a build that would have quietly verified against a newer source stops instead.',
+    run() {},
+  }),
+  defineRule({
     id: 'ground.verdict',
     module: 'grounding',
     mechanical: true,
@@ -74,14 +92,22 @@ export const stages = [
     collects: false,
     run: async (context, view) => {
       const config = view.get('config');
-      const registry = new AdapterRegistry(
-        config.sources.map((source) => (source.bind ? source.bind(path.dirname(config.configPath)) : source)),
-      );
+      const cache = new Cache(config.cacheDir);
+      const registry = new AdapterRegistry(config.sources, {
+        configDir: path.dirname(config.configPath),
+        cache,
+      });
       // `check` never touches the network. It restores pins from the lockfile and
       // verifies against what the cache already holds, so a run on a laptop with
       // no connection still checks every quote at the pinned revision.
-      const pins = await registry.pinAll({ refresh: false, lock: context.lock || {} });
-      return { registry, pins };
+      const lock = readLockfile(config.lockfile);
+      const { pins, previous } = await registry.pinAll({
+        refresh: Boolean(context.refresh),
+        lock: lock.sources,
+        only: context.refreshOnly || null,
+      });
+      const drift = comparePins(lock.sources, pins);
+      return { registry, pins, previous, cache, lock, drift };
     },
   },
 
@@ -103,8 +129,30 @@ export const stages = [
       const docs = view.get('parse');
       const config = view.get('config');
       const maps = view.get('spanmap.load');
-      const { registry, pins } = view.get('sources.pin');
+      const { registry, pins, previous, drift } = view.get('sources.pin');
       const findings = [];
+
+      const grounded = docs.filter((doc) => doc.profile?.grounding?.enabled);
+
+      // Reported once per run rather than once per span, because a moved pin is a
+      // fact about the source set and not about any one claim.
+      if (context.frozen && drift?.moved?.length && grounded.length) {
+        for (const moved of drift.moved) {
+          findings.push(normalizeFinding({
+            rule: 'ground.pin-moved',
+            module: 'grounding',
+            severity: 'error',
+            file: grounded[0].path,
+            line: 1,
+            message: `source '${moved.id}' would move from ${short(moved.from)} to ${short(moved.to)}`,
+            why: 'A frozen run refuses to verify against a revision the lockfile does not name.',
+            fix: {
+              kind: 'decision',
+              instruction: 'Run `groundtruth resolve --refresh`, review what the move changed, then commit the lockfile.',
+            },
+          }));
+        }
+      }
 
       for (const doc of docs) {
         if (!doc.profile?.grounding?.enabled) continue;
@@ -267,12 +315,41 @@ export const stages = [
                   fix: { kind: 'source', instruction: 'Fix the path, or add the file to the source folder.' },
                 }));
               } else {
-                const located = adapter.locate(resolved, span.quote);
+                const located = adapter.locate(resolved, span.quote, ref);
                 record.located = located;
                 record.permalink = adapter.permalink(ref, located, pins[adapter.id]);
                 record.sourceLabel = adapter.describe(ref, located);
 
-                if (!located.found) {
+                // STALE is derived here and never authored. Two mechanisms reach
+                // this point: a pin moved under code, or a newer capture of a page
+                // dropped the quote.
+                const drifted = adapter.drift
+                  ? adapter.drift(ref, span.quote, pins[adapter.id], previous?.[adapter.id])
+                  : null;
+
+                if (drifted?.stale) {
+                  record.stale = drifted;
+                  doc.verdictTally.STALE = (doc.verdictTally.STALE || 0) + 1;
+                  findings.push(normalizeFinding({
+                    rule: 'ground.stale',
+                    module: 'grounding',
+                    severity: config.derivedVerdicts.STALE.severity,
+                    file: doc.path,
+                    line,
+                    message: `${drifted.reason}: was ${drifted.was}, now ${drifted.now}`,
+                    why: `The source changed between ${drifted.from} and ${drifted.to}. The claim was true when it was written.`,
+                    data: { spanMap: map.path, spanIndex: span.index, drift: drifted },
+                    fix: {
+                      kind: 'decision',
+                      instruction: 'Read what the source says now. Either the claim needs updating or the pin does.',
+                    },
+                  }));
+                }
+
+                // A drifted source already explains why the quote is absent, and
+                // in more useful terms. Reporting both says the same thing twice
+                // and buries the date range that matters.
+                if (!located.found && !drifted?.stale) {
                   findings.push(normalizeFinding({
                     rule: 'ground.quote-not-found',
                     module: 'grounding',
@@ -350,6 +427,10 @@ function fixFor(verdict, span) {
     default:
       return null;
   }
+}
+
+function short(value) {
+  return String(value || '?').slice(0, 12);
 }
 
 function clip(text, max = 70) {

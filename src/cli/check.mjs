@@ -17,12 +17,25 @@ export async function runCheck(argv) {
   const config = await loadConfig({ cwd: flags.cwd || process.cwd(), configPath: flags.config });
   const modules = normalizeModules(flags);
 
-  const { pipeline, modules: active } = await buildEngine(config, { modules });
+  // --frozen is the CI mode: it promotes the pin-moved rule, which ships off so a
+  // normal run never mentions a pin it is not going to fail on.
+  const severity = flags.frozen
+    ? { ...config.severity, 'ground.pin-moved': 'error' }
+    : config.severity;
+  const { pipeline, modules: active } = await buildEngine(
+    { ...config, severity },
+    { modules },
+  );
 
   const stageLog = [];
   const started = Date.now();
   const { outputs } = await pipeline.run(
-    { only: positionals, config },
+    {
+      only: positionals,
+      config,
+      frozen: Boolean(flags.frozen),
+      offline: Boolean(flags.offline) || Boolean(flags.frozen),
+    },
     {
       upTo: 'findings.collect',
       onStage: (entry) => stageLog.push(entry),

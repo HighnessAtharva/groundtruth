@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>How p-limit works, one counter and one queue — groundtruth</title>
+<script>
+// Applied before first paint so a dark theme does not flash white.
+try {
+  var stored = localStorage.getItem('gtTheme');
+  if (stored === 'light' || stored === 'dark') document.documentElement.dataset.theme = stored;
+} catch (e) {}
+</script>
+<style>
+:root {
+  color-scheme: light dark;
+
+  /* Solved, not eyeballed. test/contrast.test.mjs recomputes every ratio from
+     these values, so a token that stops clearing its threshold fails the suite
+     rather than shipping. Each colour is also fitted to the sRGB gamut, because a
+     clipped colour renders as a different hue than the one that was chosen and
+     two verdicts can silently converge.
+
+     Scalars, never a composed colour, for --v-*. A custom property containing
+     var(--h) resolves it against the element it is DECLARED on, which here is
+     :root where --h is unset, so every verdict collapsed onto one hue. The
+     oklch() is assembled at each point of use instead. */
+  --paper: #fdfbf8;
+  --paper: oklch(0.988 0.004 75);
+  --surface: #f5f3f0;
+  --surface: oklch(0.965 0.005 75);
+  --surface-2: #edeae6;
+  --surface-2: oklch(0.938 0.006 75);
+  --ink: #28231e;
+  --ink: oklch(0.26 0.012 70);
+  --ink-2: #5c5751;
+  --ink-2: oklch(0.46 0.012 70);
+  --ink-3: #746f69;
+  --ink-3: oklch(0.545 0.011 70);
+  --rule: #e1ddda;
+  --rule: oklch(0.9 0.006 70);
+  --rule-2: #c7c3bf;
+  --rule-2: oklch(0.82 0.008 70);
+  --accent: #0067c8;
+  --accent: oklch(0.52 0.171 255);
+  --good: #0d7a3e;
+  --good: oklch(0.51 0.13 152);
+  --mid: #9b610e;
+  --mid: oklch(0.545 0.115 68);
+  --bad: #a92324;
+  --bad: oklch(0.48 0.17 26);
+  --hard: #a92324;
+  --hard: oklch(0.48 0.17 26);
+  --tough: #807100;
+  --tough: oklch(0.545 0.114 100);
+
+  --v-l: 0.615;
+  --v-c: 0.104;
+  --v-wash-l: 0.92;
+  --v-wash-c: 0.04;
+  --v-edge-l: 0.72;
+  --v-edge-c: 0.09;
+
+  --shadow: 0 1px 2px oklch(0.26 0.012 70 / 0.06), 0 8px 28px oklch(0.26 0.012 70 / 0.11);
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121417;
+    --paper: oklch(0.19 0.008 265);
+    --surface: #1c1e22;
+    --surface: oklch(0.235 0.009 265);
+    --surface-2: #25282d;
+    --surface-2: oklch(0.275 0.01 265);
+    --ink: #eae7e3;
+    --ink: oklch(0.93 0.006 80);
+    --ink-2: #b2afaa;
+    --ink-2: oklch(0.755 0.008 80);
+    --ink-3: #85817a;
+    --ink-3: oklch(0.605 0.011 80);
+    --rule: #2e3036;
+    --rule: oklch(0.31 0.01 265);
+    --rule-2: #44484e;
+    --rule-2: oklch(0.4 0.012 265);
+    --accent: #76b2ff;
+    --accent: oklch(0.755 0.127 255);
+    --good: #62d286;
+    --good: oklch(0.78 0.15 152);
+    --mid: #f9a63e;
+    --mid: oklch(0.79 0.15 68);
+    --bad: #ff877e;
+    --bad: oklch(0.755 0.147 26);
+    --hard: #ff877e;
+    --hard: oklch(0.755 0.147 26);
+    --tough: #dbc63f;
+    --tough: oklch(0.82 0.15 100);
+
+    --v-l: 0.76;
+    --v-c: 0.128;
+    --v-wash-l: 0.345;
+    --v-wash-c: 0.06;
+    --v-edge-l: 0.5;
+    --v-edge-c: 0.1;
+
+    --shadow: 0 1px 2px oklch(0 0 0 / 0.5), 0 12px 34px oklch(0 0 0 / 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #121417;
+  --paper: oklch(0.19 0.008 265);
+  --surface: #1c1e22;
+  --surface: oklch(0.235 0.009 265);
+  --surface-2: #25282d;
+  --surface-2: oklch(0.275 0.01 265);
+  --ink: #eae7e3;
+  --ink: oklch(0.93 0.006 80);
+  --ink-2: #b2afaa;
+  --ink-2: oklch(0.755 0.008 80);
+  --ink-3: #85817a;
+  --ink-3: oklch(0.605 0.011 80);
+  --rule: #2e3036;
+  --rule: oklch(0.31 0.01 265);
+  --rule-2: #44484e;
+  --rule-2: oklch(0.4 0.012 265);
+  --accent: #76b2ff;
+  --accent: oklch(0.755 0.127 255);
+  --good: #62d286;
+  --good: oklch(0.78 0.15 152);
+  --mid: #f9a63e;
+  --mid: oklch(0.79 0.15 68);
+  --bad: #ff877e;
+  --bad: oklch(0.755 0.147 26);
+  --hard: #ff877e;
+  --hard: oklch(0.755 0.147 26);
+  --tough: #dbc63f;
+  --tough: oklch(0.82 0.15 100);
+
+  --v-l: 0.76;
+  --v-c: 0.128;
+  --v-wash-l: 0.345;
+  --v-wash-c: 0.06;
+  --v-edge-l: 0.5;
+  --v-edge-c: 0.1;
+
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.5), 0 12px 34px oklch(0 0 0 / 0.45);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover { text-decoration-thickness: 2px; }
+
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.gt-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.gt-header-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 12px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: baseline;
+}
+
+.gt-brand { font-size: 14px; font-weight: 680; letter-spacing: -0.015em; }
+.gt-brand a { color: var(--ink); text-decoration: none; }
+.gt-brand a:hover { color: var(--accent); }
+
+.gt-crumb {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gt-chips { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-left: auto; align-items: baseline; }
+
+/* A label and a figure, set as type. A row of bordered capsules is the
+   metric-tile reflex and it competes with the prose for attention. */
+.gt-chip { font-size: 12px; color: var(--ink-3); white-space: nowrap; text-decoration: none; }
+.gt-chip b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 660;
+  margin-left: 3px;
+}
+.gt-chip-error b { color: var(--bad); }
+.gt-chip-warn b { color: var(--mid); }
+.gt-chip-ok b { color: var(--good); }
+a.gt-chip:hover { color: var(--accent); }
+
+.gt-theme {
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule-2);
+  background: none;
+  color: var(--ink-3);
+  transition: color 140ms var(--ease), border-color 140ms var(--ease);
+}
+.gt-theme:hover { color: var(--ink); border-bottom-color: var(--ink-2); }
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.gt-main {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 40px 28px 120px;
+  display: grid;
+  /* minmax(0, ...) and never 1fr. 1fr has an auto minimum, so one wide table
+     pushes the whole grid sideways. */
+  grid-template-columns: minmax(0, 68ch) minmax(0, 300px);
+  gap: 56px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .gt-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 24px 20px 80px;
+  }
+  .gt-rail { order: -1; position: static !important; }
+  .gt-header-inner { padding: 10px 20px; }
+  .gt-index, .gt-foot { padding-left: 20px; padding-right: 20px; }
+}
+
+.gt-prose { min-width: 0; overflow-wrap: anywhere; }
+.gt-prose > :first-child { margin-top: 0; }
+
+.gt-prose h1 {
+  font-size: 2.1rem;
+  line-height: 1.15;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+  margin: 0 0 1.4rem;
+  text-wrap: balance;
+}
+.gt-prose h2 {
+  font-size: 1.6rem;
+  line-height: 1.2;
+  font-weight: 680;
+  letter-spacing: -0.018em;
+  margin: 2.8rem 0 0.8rem;
+  text-wrap: balance;
+}
+.gt-prose h3 {
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+  margin: 2rem 0 0.5rem;
+}
+.gt-prose h4, .gt-prose h5, .gt-prose h6 {
+  font-size: 1rem;
+  font-weight: 660;
+  margin: 1.6rem 0 0.4rem;
+}
+.gt-prose p { margin: 0 0 1.15rem; }
+.gt-prose ul, .gt-prose ol { margin: 0 0 1.15rem; padding-left: 1.4rem; }
+.gt-prose li { margin: 0.3rem 0; }
+.gt-prose li > ul, .gt-prose li > ol { margin: 0.3rem 0; }
+.gt-prose hr { border: 0; border-top: 1px solid var(--rule); margin: 2.6rem 0; }
+
+/* A blockquote rule is the typographic mark of quotation, not a decorative
+   accent, so it stays at 1px and neutral. */
+.gt-prose blockquote {
+  margin: 1.4rem 0;
+  padding: 0 0 0 1.15rem;
+  border-left: 1px solid var(--rule-2);
+  color: var(--ink-2);
+  font-style: italic;
+}
+.gt-prose blockquote > :last-child { margin-bottom: 0; }
+
+/* A full-bordered block with a tint and a set label. No side stripe. */
+.gt-callout {
+  margin: 1.6rem 0;
+  padding: 14px 16px 2px;
+  border: 1px solid var(--rule-2);
+  border-radius: 3px;
+  background: var(--surface);
+}
+.gt-callout-kind {
+  margin: 0 0 8px !important;
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.gt-callout > :last-child { margin-bottom: 14px !important; }
+
+.gt-prose code {
+  font-family: var(--mono);
+  font-size: 0.855em;
+  background: var(--surface-2);
+  border-radius: 3px;
+  padding: 0.12em 0.34em;
+}
+
+.gt-prose pre {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.55;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
+}
+.gt-prose pre code { background: none; padding: 0; font-size: inherit; }
+
+/* An untagged fence gets a full tinted border, never a side stripe. */
+.gt-untagged-fence pre { border-color: var(--tough); }
+
+/* Wide content scrolls inside its own box. The page body never does. */
+.gt-scroll { overflow-x: auto; margin: 1.6rem 0; max-width: 100%; }
+.gt-scroll pre { overflow-x: visible; }
+
+.gt-prose table {
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.gt-prose th, .gt-prose td {
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 16px 8px 0;
+  text-align: left;
+  vertical-align: top;
+}
+.gt-prose th {
+  font-size: 11.5px;
+  font-weight: 680;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom-color: var(--rule-2);
+}
+.gt-prose tbody tr:last-child td { border-bottom: 0; }
+
+.gt-figure { margin: 2rem 0; }
+.gt-figure img { border: 1px solid var(--rule); border-radius: 3px; display: block; }
+.gt-figure figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.5; }
+.gt-raw-html { color: var(--ink-3); font-size: 12px; }
+.gt-fn { color: var(--ink-3); font-size: 11px; }
+
+/* ── Marks ──────────────────────────────────────────────────────────────── */
+
+/* Underline first. A wash on every bound claim is a wall of highlighter, and on
+   a page with forty of them the prose stops being readable. */
+.gt-span {
+  background: none;
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-bottom: 2px solid oklch(var(--v-l) var(--v-c) var(--h, 262));
+  padding-bottom: 1px;
+  cursor: help;
+  transition: background-color 140ms var(--ease);
+}
+.gt-span:hover, .gt-span:focus-visible {
+  background: oklch(var(--v-wash-l) var(--v-wash-c) var(--h, 262));
+  /* Never a filter here. It creates a stacking context and traps the card. */
+  position: relative;
+  z-index: 60;
+}
+
+/* A wash only when the verdict blocks. Inverting the emphasis makes the two real
+   problems more visible, because they stop competing with the ones that are fine. */
+.gt-span.gt-emphatic {
+  background: oklch(var(--v-wash-l) var(--v-wash-c) var(--h, 262));
+  box-shadow: inset 0 0 0 1px oklch(var(--v-edge-l) var(--v-edge-c) var(--h, 262));
+  border-radius: 2px;
+  padding: 0.05em 0.22em 1px;
+  font-weight: 560;
+}
+.gt-span.gt-emphatic:hover, .gt-span.gt-emphatic:focus-visible {
+  box-shadow: inset 0 0 0 1px oklch(var(--v-l) var(--v-c) var(--h, 262));
+}
+
+/* Dotted, so a hard sentence and a cited sentence never read as the same kind of
+   thing. A sentence that is both nests, the citation rule under the dotted one. */
+.gt-read {
+  text-decoration: underline dotted 2px var(--tough);
+  text-underline-offset: 5px;
+  cursor: help;
+}
+.gt-read.gt-band-hard { text-decoration-color: var(--hard); }
+
+/* ── Hover card ─────────────────────────────────────────────────────────── */
+
+.gt-card {
+  position: fixed;
+  z-index: 200;
+  width: min(370px, calc(100vw - 24px));
+  max-height: min(58vh, 440px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: none;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid var(--rule-2);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.gt-card[data-open="1"] { display: block; }
+
+.gt-card-verdict {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: oklch(var(--v-l) var(--v-c) var(--h, 262));
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.gt-card-verdict::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: oklch(var(--v-l) var(--v-c) var(--h, 262));
+  flex: none;
+}
+
+.gt-card-row { margin: 10px 0; }
+.gt-card-row:last-of-type { margin-bottom: 0; }
+.gt-card-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 680;
+  color: var(--ink-3);
+  margin-bottom: 3px;
+}
+/* A full-bordered tinted block, not a side stripe. */
+.gt-card-quote {
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.gt-card-note { color: var(--ink-2); }
+.gt-card-src { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+.gt-card-warn { color: var(--mid); font-size: 12px; margin: 8px 0; }
+.gt-card-hint {
+  color: var(--ink-3);
+  font-size: 11px;
+  margin-top: 12px;
+  padding-top: 9px;
+  border-top: 1px solid var(--rule);
+}
+.gt-card ul { margin: 4px 0 0; padding-left: 17px; color: var(--ink-2); }
+.gt-card li { margin: 2px 0; }
+.gt-card-fix { color: var(--ink); font-weight: 520; }
+
+/* ── Apparatus ──────────────────────────────────────────────────────────── */
+
+/* One continuous surface divided by hairlines. Not a stack of floating cards. */
+.gt-rail {
+  position: sticky;
+  top: 66px;
+  min-width: 0;
+  border-top: 2px solid var(--ink);
+  font-size: 13px;
+}
+
+.gt-panel { border-bottom: 1px solid var(--rule); }
+.gt-panel > summary {
+  cursor: pointer;
+  padding: 11px 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  list-style: none;
+  transition: color 140ms var(--ease);
+}
+.gt-panel > summary:hover { color: var(--ink); }
+.gt-panel > summary::-webkit-details-marker { display: none; }
+.gt-panel-body { padding: 0 0 18px; }
+
+.gt-count {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.gt-legend { display: grid; gap: 6px; }
+.gt-legend-item {
+  font-size: 12px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.gt-legend-item::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: oklch(var(--v-l) var(--v-c) var(--h, 262));
+  flex: none;
+}
+.gt-legend-item b {
+  margin-left: auto;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+}
+
+.gt-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.gt-check { display: grid; grid-template-columns: 13px minmax(0, 1fr); gap: 9px; }
+.gt-check-glyph { font-size: 11px; line-height: 1.6; font-weight: 700; }
+.gt-check-pass .gt-check-glyph { color: var(--good); }
+.gt-check-warn .gt-check-glyph { color: var(--mid); }
+.gt-check-fail .gt-check-glyph { color: var(--bad); }
+.gt-check-label { font-weight: 620; color: var(--ink); }
+.gt-check-detail { color: var(--ink-2); font-size: 12px; overflow-wrap: anywhere; }
+.gt-check-fix { color: var(--accent); font-size: 12px; margin-top: 2px; }
+.gt-advisory {
+  font-size: 9.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 680;
+  margin-left: 5px;
+}
+
+.gt-group-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 680;
+  color: var(--ink-3);
+  margin: 18px 0 8px;
+}
+.gt-group-label:first-child { margin-top: 0; }
+
+.gt-findings { list-style: none; margin: 0; padding: 0; }
+/* A hairline above each finding and a leading severity glyph. No side stripe. */
+.gt-finding { padding: 12px 0; border-top: 1px solid var(--rule); }
+.gt-finding:first-child { padding-top: 0; border-top: 0; }
+.gt-finding:last-child { padding-bottom: 0; }
+.gt-finding-head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.gt-finding-glyph { font-weight: 700; font-family: var(--sans); flex: none; }
+.gt-finding-error .gt-finding-glyph { color: var(--bad); }
+.gt-finding-warn .gt-finding-glyph { color: var(--mid); }
+.gt-finding-info .gt-finding-glyph { color: var(--accent); }
+.gt-finding-blocking {
+  margin-left: auto;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--bad);
+}
+.gt-finding-msg { font-size: 12.5px; color: var(--ink); }
+.gt-finding-fix { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+
+.gt-score {
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.gt-score span { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--ink-3); }
+.gt-score-good { color: var(--good); }
+.gt-score-ok { color: var(--mid); }
+.gt-score-poor { color: var(--bad); }
+
+/* ── Index ──────────────────────────────────────────────────────────────── */
+
+.gt-index { max-width: 1160px; margin: 0 auto; padding: 44px 28px 40px; }
+
+.gt-index-lede {
+  font-size: 1.25rem;
+  line-height: 1.45;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  max-width: 48ch;
+  margin: 0 0 38px;
+  text-wrap: pretty;
+}
+.gt-index-lede b { font-weight: 680; }
+
+.gt-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 44px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.gt-stat { display: grid; gap: 0; }
+.gt-stat b {
+  font-size: 25px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.gt-stat span {
+  font-size: 11px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 620;
+}
+
+.gt-spread { display: flex; height: 4px; overflow: hidden; margin: 24px 0 14px; gap: 1px; }
+.gt-spread div { min-width: 2px; border-radius: 1px; }
+
+.gt-index .gt-legend { display: flex; flex-wrap: wrap; gap: 7px 22px; margin-bottom: 34px; }
+.gt-index .gt-legend-item b { margin-left: 3px; }
+
+.gt-table-wrap { overflow-x: auto; border-top: 2px solid var(--ink); }
+table.gt-list {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13.5px;
+  min-width: 660px;
+  font-variant-numeric: tabular-nums;
+}
+table.gt-list th, table.gt-list td {
+  padding: 11px 16px 11px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+}
+table.gt-list th {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  color: var(--ink-3);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: color 140ms var(--ease);
+}
+table.gt-list th:hover, table.gt-list th[aria-sort] { color: var(--ink); }
+table.gt-list th[aria-sort="descending"]::after { content: " \2193"; }
+table.gt-list th[aria-sort="ascending"]::after { content: " \2191"; }
+table.gt-list tbody tr:last-child td { border-bottom: 0; }
+table.gt-list td.gt-num { text-align: right; padding-right: 20px; }
+table.gt-list a { color: var(--ink); text-decoration: none; font-weight: 620; }
+table.gt-list a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+table.gt-list .gt-check-detail { font-family: var(--mono); font-size: 11px; margin-top: 2px; }
+.gt-pill { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.gt-zero { color: var(--ink-3); }
+.gt-bad { color: var(--bad); font-weight: 660; }
+.gt-mid { color: var(--mid); font-weight: 620; }
+
+.gt-empty { color: var(--ink-2); padding: 34px 0; max-width: 54ch; }
+.gt-foot {
+  max-width: 80ch;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.7;
+}
+.gt-foot code { font-family: var(--mono); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+@media print {
+  .gt-header, .gt-rail, .gt-card, .gt-theme { display: none !important; }
+  .gt-main { grid-template-columns: minmax(0, 1fr); padding: 0; }
+  .gt-span { border-bottom-width: 1px; }
+}
+</style>
+</head>
+<body>
+<header class="gt-header"><div class="gt-header-inner"><div class="gt-brand"><a href="index.html">groundtruth</a></div><div class="gt-crumb">article/counter-and-queue.md</div><div class="gt-chips"><span class="gt-chip gt-chip-ok">spans <b>12</b></span><span class="gt-chip gt-chip-error">errors <b>6</b></span><span class="gt-chip gt-chip-warn">warnings <b>11</b></span><span class="gt-chip gt-chip-warn">seo <b>79</b></span><a class="gt-chip" href="index.html">index</a><button class="gt-theme" id="gt-theme" type="button">theme</button></div></div></header>
+<div class="gt-main">
+<article class="gt-prose"><h1 id="h-12-how-p-limit-works-one-counter-and-one-qu" data-line="12">How p-limit works, one counter and one queue</h1>
+<p data-line="14">Here is how p-limit works. One integer counts what is running, one queue holds what is not, and a three-line function moves items between them. That is the whole library. <span class="gt-read gt-band-hard" data-read="0" tabindex="0">It sits in almost every Node dependency tree and almost nobody has opened it, which is a shame, because reading it takes ten minutes and it changes how you write every batch job afterwards.</span></p>
+<p data-line="16">Every quote below is pinned to a commit. <span class="gt-read gt-band-tough" data-read="1" tabindex="0">Click any highlighted claim in the report and it opens the line on GitHub at that exact SHA, so you can check this article rather than trust it.</span></p>
+<h2 id="h-18-what-the-whole-thing-is" data-line="18">What the whole thing is</h2>
+<p data-line="20"><mark class="gt-span gt-v-verified" style="--h:152" data-span="0" data-verdict="VERIFIED" tabindex="0">The limiter tracks in-flight work with a single integer counter</mark>. That is the entire state. <span class="gt-read gt-band-tough" data-read="2" tabindex="0">A queue sits beside it holding calls that have not started, and one function exists to move an item from the queue into the counter when there is room.</span></p>
+<p data-line="22"><span class="gt-read gt-band-hard" data-read="3" tabindex="0">That mover is the load-bearing piece, and it runs a single check: </span><mark class="gt-span gt-v-verified" style="--h:152" data-span="1" data-verdict="VERIFIED" tabindex="0"><span class="gt-read gt-band-hard" data-read="3" tabindex="0">if the counter is under the limit and the queue is not empty, increment the counter and start the next item</span></mark><span class="gt-read gt-band-hard" data-read="3" tabindex="0">.</span> Nothing else in the file decides when work begins. <mark class="gt-span gt-v-verified" style="--h:152" data-span="2" data-verdict="VERIFIED" tabindex="0">When a task finishes, the counter goes down and the mover runs again</mark>.</p>
+<p data-line="24">Two lines. Every batch job you have written by hand was reimplementing those two lines, usually with a bug in them. <span class="gt-read gt-band-tough" data-read="4" tabindex="0">The usual bug is a counter that decrements on success and not on failure, which leaks a slot per error until the whole thing wedges.</span></p>
+<h2 id="h-26-the-part-that-surprises-people" data-line="26">The part that surprises people</h2>
+<p data-line="28"><mark class="gt-span gt-v-verified" style="--h:152" data-span="3" data-verdict="VERIFIED" tabindex="0">A call into the limiter resolves with a promise, immediately, before the work has finished</mark>. The comment in the source says so directly.</p>
+<p data-line="30">That is not an oversight and it is the reason the library composes. The caller gets a handle straight away, and the limiter separately waits for the work to settle so it knows when to decrement. Those two waits are deliberately different waits. <span class="gt-read gt-band-tough" data-read="5" tabindex="0">Collapsing them into one is the mistake most hand-rolled versions make, and it is why the hand-rolled version usually cannot report how many tasks are in flight.</span></p>
+<p data-line="32">The error path is worth reading too. <span class="gt-read gt-band-hard" data-read="6" tabindex="0">The limiter awaits the result inside a </span><span class="gt-read gt-band-hard" data-read="6" tabindex="0"><code>try</code></span><span class="gt-read gt-band-hard" data-read="6" tabindex="0"> with an empty </span><span class="gt-read gt-band-hard" data-read="6" tabindex="0"><code>catch</code></span><span class="gt-read gt-band-hard" data-read="6" tabindex="0">, and the comment explains the reasoning: </span><mark class="gt-span gt-v-verified" style="--h:152" data-span="4" data-verdict="VERIFIED" tabindex="0"><span class="gt-read gt-band-hard" data-read="6" tabindex="0">catching there prevents an unhandled rejection while the original promise rejection is preserved for the caller</span></mark><span class="gt-read gt-band-hard" data-read="6" tabindex="0">.</span> You get both behaviours, which is what you want and not what you get if you write this in a hurry.</p>
+<div class="gt-scroll" data-line="34"><pre><code class="language-js">const limit = pLimit(4);
+const results = await Promise.all(urls.map(url =&gt; limit(() =&gt; fetch(url))));</code></pre></div>
+<h2 id="h-39-three-ways-people-break-it" data-line="39">Three ways people break it</h2>
+<p data-line="41"><strong>Building the limiter inside the loop.</strong> <mark class="gt-span gt-v-inferred" style="--h:100" data-span="5" data-verdict="INFERRED" tabindex="0"><span class="gt-read gt-band-hard" data-read="7" tabindex="0">The factory returns a fresh closure with its own counter, so a limiter created per iteration gives every iteration its own budget</span></mark><span class="gt-read gt-band-hard" data-read="7" tabindex="0"> and the cap does nothing at all.</span> The limiter has to outlive the loop that uses it. This one is common because the broken version looks correct and runs correctly on a machine fast enough to hide it.</p>
+<p data-line="43"><strong>Awaiting the wrong thing.</strong> A call to the limiter returns a promise for the result of the function you passed. Awaiting that promise inside the loop serialises the entire batch, which produces a working program running at concurrency one. Nothing errors and nothing warns. The job just takes eight hours instead of twenty minutes.</p>
+<p data-line="45"><strong>Assuming results come back in the order they went in.</strong> <mark class="gt-span gt-v-contradicted gt-emphatic" style="--h:10" data-span="6" data-verdict="CONTRADICTED" tabindex="0">Tasks resolve in the order they were queued</mark>.</p>
+<div class="gt-scroll gt-untagged-fence" data-line="47"><pre><code class="gt-untagged">await Promise.all(tasks.map(task =&gt; limit(task)))</code></pre></div>
+<h2 id="h-51-how-p-limit-works-when-the-limit-changes" data-line="51">How p-limit works when the limit changes</h2>
+<p data-line="53"><span class="gt-read gt-band-tough" data-read="8" tabindex="0">Changing the limit while work is in flight is supported, and it drains correctly.</span> <mark class="gt-span gt-v-verified" style="--h:152" data-span="7" data-verdict="VERIFIED" tabindex="0">The setter validates the new value, assigns it, then schedules a microtask that keeps moving items while there is room</mark>. <span class="gt-read gt-band-tough" data-read="9" tabindex="0">Raising the limit halfway through a run starts more work without a restart, which matters when the thing you are rate-limiting turns out to tolerate more than you guessed.</span></p>
+<p data-line="55">The validator is stricter than you would expect. <mark class="gt-span gt-v-verified" style="--h:152" data-span="8" data-verdict="VERIFIED" tabindex="0"><span class="gt-read gt-band-tough" data-read="10" tabindex="0">It accepts an integer or positive infinity, and only above zero</span></mark><span class="gt-read gt-band-tough" data-read="10" tabindex="0">, and the error message is exact: </span><mark class="gt-span gt-v-verified" style="--h:152" data-span="9" data-verdict="VERIFIED" tabindex="0"><span class="gt-read gt-band-tough" data-read="10" tabindex="0">it expects a number from 1 and up</span></mark><span class="gt-read gt-band-tough" data-read="10" tabindex="0">.</span> Passing zero throws instead of silently blocking forever, which is the failure mode you want from a concurrency cap.</p>
+<p data-line="57"><span class="gt-read gt-band-tough" data-read="11" tabindex="0">There is also a helper on the returned function that </span><mark class="gt-span gt-v-verified" style="--h:152" data-span="10" data-verdict="VERIFIED" tabindex="0"><span class="gt-read gt-band-tough" data-read="11" tabindex="0">runs an iterable through the limiter and collects with Promise.all</span></mark><span class="gt-read gt-band-tough" data-read="11" tabindex="0">, so ordered results are one call away when you want them.</span> <mark class="gt-span gt-v-unsourced gt-emphatic" style="--h:32" data-span="11" data-verdict="UNSOURCED" tabindex="0">Most teams set the limit to the number of CPU cores</mark>.</p>
+<h2 id="h-59-conclusion" data-line="59">Conclusion</h2>
+<p data-line="61">Read the file. <span class="gt-read gt-band-tough" data-read="12" tabindex="0">It is shorter than the wrapper you were about to write around it, and the two lines in the middle are the ones worth stealing.</span></p></article>
+<div class="gt-rail"><details class="gt-panel" open><summary>Claims<span class="gt-count">12</span></summary><div class="gt-panel-body"><div class="gt-legend"><span class="gt-legend-item" style="--h:152">Verified<b>9</b></span><span class="gt-legend-item" style="--h:100">Inferred<b>1</b></span><span class="gt-legend-item" style="--h:32">No source found<b>1</b></span><span class="gt-legend-item" style="--h:10">Contradicted<b>1</b></span></div></div></details><details class="gt-panel" open><summary>Search and answer engines<span class="gt-count">23/33</span></summary><div class="gt-panel-body"><div class="gt-score gt-score-ok">79<span> / 100, advisory</span></div><div class="gt-group-label">Search snippet</div><ul class="gt-checks"><li class="gt-check gt-check-fail"><span class="gt-check-glyph">✕</span><span><span class="gt-check-label">Meta description length</span><div class="gt-check-detail">226 characters, over 165</div><div class="gt-check-fix">Cut 61 characters or it gets truncated in the results page.</div></span></li><li class="gt-check gt-check-warn"><span class="gt-check-glyph">!</span><span><span class="gt-check-label">Body length floor</span><span class="gt-advisory">advisory</span><div class="gt-check-detail">755 words, under the 900 floor</div><div class="gt-check-fix">Add substance, never padding. This never blocks for exactly that reason.</div></span></li></ul><div class="gt-group-label">Heading structure</div><ul class="gt-checks"><li class="gt-check gt-check-warn"><span class="gt-check-glyph">!</span><span><span class="gt-check-label">H2 length</span><span class="gt-advisory">advisory</span><div class="gt-check-detail">1 H2 outside 3 to 14 words: &quot;Conclusion&quot;</div><div class="gt-check-fix">Write each heading as the answer to one question.</div></span></li><li class="gt-check gt-check-fail"><span class="gt-check-glyph">✕</span><span><span class="gt-check-label">No vague H2</span><div class="gt-check-detail">1 vague heading(s): &quot;Conclusion&quot;</div><div class="gt-check-fix">Say what the section concludes, not that it is the conclusion.</div></span></li></ul><div class="gt-group-label">Answer engine</div><ul class="gt-checks"><li class="gt-check gt-check-fail"><span class="gt-check-glyph">✕</span><span><span class="gt-check-label">FAQ block present</span><div class="gt-check-detail">no FAQ block</div><div class="gt-check-fix">Add a heading matching the FAQ pattern, then question and answer pairs. FAQPage structured data is generated from it.</div></span></li><li class="gt-check gt-check-fail"><span class="gt-check-glyph">✕</span><span><span class="gt-check-label">Fenced code has a language</span><div class="gt-check-detail">1 untagged fence(s) at line 47</div><div class="gt-check-fix">Add a language tag to the opening fence.</div></span></li></ul><div class="gt-group-label">Links and media</div><ul class="gt-checks"><li class="gt-check gt-check-warn"><span class="gt-check-glyph">!</span><span><span class="gt-check-label">Images present</span><span class="gt-advisory">advisory</span><div class="gt-check-detail">no images</div><div class="gt-check-fix">A long page with no figure is a wall of text.</div></span></li><li class="gt-check gt-check-warn"><span class="gt-check-glyph">!</span><span><span class="gt-check-label">Real tables, not screenshots</span><span class="gt-advisory">advisory</span><div class="gt-check-detail">no tables</div><div class="gt-check-fix">A comparison rendered as a table can be lifted. A screenshot of one cannot be read.</div></span></li><li class="gt-check gt-check-warn"><span class="gt-check-glyph">!</span><span><span class="gt-check-label">Internal links</span><span class="gt-advisory">advisory</span><div class="gt-check-detail">0 internal link(s)</div><div class="gt-check-fix">Under 2. A page nothing points at and that points at nothing is an orphan.</div></span></li><li class="gt-check gt-check-warn"><span class="gt-check-glyph">!</span><span><span class="gt-check-label">External links</span><span class="gt-advisory">advisory</span><div class="gt-check-detail">0 external link(s)</div><div class="gt-check-fix">Under 3. Link the sources a reader would want to check.</div></span></li></ul></div></details><details class="gt-panel" open><summary>Findings<span class="gt-count">6 blocking, 11 advisory</span></summary><div class="gt-panel-body"><ul class="gt-findings"><li class="gt-finding gt-finding-error"><div class="gt-finding-head"><span class="gt-finding-glyph">✕</span><span>seo.len-meta · line 1</span><span class="gt-finding-blocking">blocking</span></div><div class="gt-finding-msg">Meta description length: 226 characters, over 165</div><div class="gt-finding-fix">Cut 61 characters or it gets truncated in the results page.</div></li><li class="gt-finding gt-finding-error"><div class="gt-finding-head"><span class="gt-finding-glyph">✕</span><span>seo.faq-present · line 1</span><span class="gt-finding-blocking">blocking</span></div><div class="gt-finding-msg">FAQ block present: no FAQ block</div><div class="gt-finding-fix">Add a heading matching the FAQ pattern, then question and answer pairs. FAQPage structured data is generated from it.</div></li><li class="gt-finding gt-finding-error"><div class="gt-finding-head"><span class="gt-finding-glyph">✕</span><span>ground.verdict · line 45</span><span class="gt-finding-blocking">blocking</span></div><div class="gt-finding-msg">Contradicted: &quot;Tasks resolve in the order they were queued&quot;</div><div class="gt-finding-fix">A source disagrees with this claim. Read both and decide which is wrong. Note on file: Each call resolves when its own task settles, so completion order follows duration and not queue order. Only the map helper preserves input order, and it does that with Promise.all rather than with the queue.</div></li><li class="gt-finding gt-finding-error"><div class="gt-finding-head"><span class="gt-finding-glyph">✕</span><span>seo.fence-language · line 47</span><span class="gt-finding-blocking">blocking</span></div><div class="gt-finding-msg">Fenced code has a language: 1 untagged fence(s) at line 47</div><div class="gt-finding-fix">Add a language tag to the opening fence.</div></li><li class="gt-finding gt-finding-error"><div class="gt-finding-head"><span class="gt-finding-glyph">✕</span><span>ground.verdict · line 57</span><span class="gt-finding-blocking">blocking</span></div><div class="gt-finding-msg">No source found: &quot;Most teams set the limit to the number of CPU cores&quot;</div><div class="gt-finding-fix">Find a source that says this, or cut the sentence. Do not mark it VERIFIED without a quote.</div></li><li class="gt-finding gt-finding-error"><div class="gt-finding-head"><span class="gt-finding-glyph">✕</span><span>seo.h2-vague · line 59</span><span class="gt-finding-blocking">blocking</span></div><div class="gt-finding-msg">No vague H2: 1 vague heading(s): &quot;Conclusion&quot;</div><div class="gt-finding-fix">Say what the section concludes, not that it is the conclusion.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>seo.body-floor · line 1</span></div><div class="gt-finding-msg">Body length floor: 755 words, under the 900 floor</div><div class="gt-finding-fix">Add substance, never padding. This never blocks for exactly that reason.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>seo.h2-shape · line 1</span></div><div class="gt-finding-msg">H2 length: 1 H2 outside 3 to 14 words: &quot;Conclusion&quot;</div><div class="gt-finding-fix">Write each heading as the answer to one question.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>seo.img-count · line 1</span></div><div class="gt-finding-msg">Images present: no images</div><div class="gt-finding-fix">A long page with no figure is a wall of text.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>seo.table-present · line 1</span></div><div class="gt-finding-msg">Real tables, not screenshots: no tables</div><div class="gt-finding-fix">A comparison rendered as a table can be lifted. A screenshot of one cannot be read.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>seo.links-internal · line 1</span></div><div class="gt-finding-msg">Internal links: 0 internal link(s)</div><div class="gt-finding-fix">Under 2. A page nothing points at and that points at nothing is an orphan.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>seo.links-external · line 1</span></div><div class="gt-finding-msg">External links: 0 external link(s)</div><div class="gt-finding-fix">Under 3. Link the sources a reader would want to check.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>read.hard · line 14</span></div><div class="gt-finding-msg">Hard to read (27): 34 words, 12 over the 22-word budget, 4 clause breaks stacked in one sentence</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>read.hard · line 22</span></div><div class="gt-finding-msg">Hard to read (27): 33 words, 11 over the 22-word budget, 3 clause breaks stacked in one sentence, two independent clauses welded with a coordinator</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>read.hard · line 32</span></div><div class="gt-finding-msg">Hard to read (39): 34 words, 12 over the 22-word budget, 3 clause breaks stacked in one sentence, passive voice, 2 verbs buried inside nouns, two independent clauses welded with a coordinator</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>read.hard · line 41</span></div><div class="gt-finding-msg">Hard to read (19): 29 words, 7 over the 22-word budget, 2 verbs buried inside nouns, two independent clauses welded with a coordinator</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-warn"><div class="gt-finding-head"><span class="gt-finding-glyph">!</span><span>ground.verdict · line 41</span></div><div class="gt-finding-msg">Inferred: &quot;The factory returns a fresh closure with its own counter, so a limite…&quot;</div><div class="gt-finding-fix">Check the derivation still holds against the current source records.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 16</span></div><div class="gt-finding-msg">Slow going (16): 28 words, 6 over the 22-word budget, two independent clauses welded with a coordinator, 2 clause breaks stacked in one sentence</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 20</span></div><div class="gt-finding-msg">Slow going (10): 29 words, 7 over the 22-word budget</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 24</span></div><div class="gt-finding-msg">Slow going (11): 3 clause breaks stacked in one sentence, 25 words, 3 over the 22-word budget</div><div class="gt-finding-fix">Give each clause its own sentence, or turn the list of them into bullets.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 30</span></div><div class="gt-finding-msg">Slow going (12): 27 words, 5 over the 22-word budget, two independent clauses welded with a coordinator</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 53</span></div><div class="gt-finding-msg">Slow going (13): passive voice, two independent clauses welded with a coordinator, 2 clause breaks stacked in one sentence</div><div class="gt-finding-fix">Name the thing doing the work and put it in front of the verb.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 53</span></div><div class="gt-finding-msg">Slow going (13): 29 words, 7 over the 22-word budget, 2 clause breaks stacked in one sentence</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 55</span></div><div class="gt-finding-msg">Slow going (14): 3 clause breaks stacked in one sentence, two independent clauses welded with a coordinator, 24 words, 2 over the 22-word budget</div><div class="gt-finding-fix">Give each clause its own sentence, or turn the list of them into bullets.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 57</span></div><div class="gt-finding-msg">Slow going (14): 32 words, 10 over the 22-word budget</div><div class="gt-finding-fix">Cut it into two sentences at the first natural break.</div></li><li class="gt-finding gt-finding-info"><div class="gt-finding-head"><span class="gt-finding-glyph">i</span><span>read.tough · line 61</span></div><div class="gt-finding-msg">Slow going (9): two independent clauses welded with a coordinator, 25 words, 3 over the 22-word budget</div><div class="gt-finding-fix">Put a full stop where the comma is. Each half is already a sentence.</div></li></ul></div></details></div>
+</div>
+<div class="gt-card" id="gt-card" role="dialog" aria-live="polite" data-open="0"></div>
+<footer class="gt-foot">generated by <code>groundtruth report</code> · 2026-08-22 14:49 UTC · modules: readability, seo, grounding</footer>
+<script type="application/json" id="gt-data">{"spans":{"0":{"verdict":"VERIFIED","quote":"let activeCount = 0;","note":null,"derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:17","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L17","lineUnconfirmed":false},"1":{"verdict":"VERIFIED","quote":"if (activeCount \u003c concurrency && queue.size \u003e 0) {","note":"The two statements inside the branch are the increment and the dequeue.","derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:21","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L21","lineUnconfirmed":false},"2":{"verdict":"VERIFIED","quote":"activeCount--;","note":"Followed immediately by resumeNext() in the same function.","derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:28","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L28","lineUnconfirmed":false},"3":{"verdict":"VERIFIED","quote":"// Resolve immediately with the promise (don't wait for completion)","note":"Citing the comment rather than the call, because the comment is the claim.","derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:36","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L36","lineUnconfirmed":false},"4":{"verdict":"VERIFIED","quote":"but the original promise rejection is preserved for the caller","note":null,"derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:41","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L41","lineUnconfirmed":false},"5":{"verdict":"INFERRED","quote":"export default function pLimit(concurrency) {","note":null,"derivation":"pLimit declares activeCount and queue inside its own body and returns generator, so each call produces an independent pair. The consequence for a loop is mine, the scoping is the source.","sourceLabel":"sindresorhus/p-limit@df47604 index.js:3","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L3","lineUnconfirmed":false},"6":{"verdict":"CONTRADICTED","quote":"const result = (async () =\u003e function_(...arguments_))();","note":"Each call resolves when its own task settles, so completion order follows duration and not queue order. Only the map helper preserves input order, and it does that with Promise.all rather than with the queue.","derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:34","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L34","lineUnconfirmed":false},"7":{"verdict":"VERIFIED","quote":"queueMicrotask(() =\u003e {","note":"validateConcurrency and the assignment sit directly above it, the while loop directly inside.","derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:98","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L98","lineUnconfirmed":false},"8":{"verdict":"VERIFIED","quote":"if (!((Number.isInteger(concurrency) || concurrency === Number.POSITIVE_INFINITY) && concurrency \u003e 0)) {","note":null,"derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:124","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L124","lineUnconfirmed":false},"9":{"verdict":"VERIFIED","quote":"throw new TypeError('Expected `concurrency` to be a number from 1 and up');","note":null,"derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:125","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L125","lineUnconfirmed":false},"10":{"verdict":"VERIFIED","quote":"return Promise.all(promises);","note":null,"derivation":null,"sourceLabel":"sindresorhus/p-limit@df47604 index.js:109","permalink":"https://github.com/sindresorhus/p-limit/blob/df476048d023ff868cd45b35ee47f5fb0ca2b25a/index.js#L109","lineUnconfirmed":false},"11":{"verdict":"UNSOURCED","quote":null,"note":"A claim about what other people do, in an article that only read one file. Cut it or cite a survey.","derivation":null,"sourceLabel":null,"permalink":null,"lineUnconfirmed":false}},"sentences":{"0":{"band":"hard","label":"Hard to read","score":27,"words":34,"reasons":["34 words, 12 over the 22-word budget","4 clause breaks stacked in one sentence"],"fix":"Cut it into two sentences at the first natural break."},"1":{"band":"tough","label":"Slow going","score":16,"words":28,"reasons":["28 words, 6 over the 22-word budget","two independent clauses welded with a coordinator","2 clause breaks stacked in one sentence"],"fix":"Cut it into two sentences at the first natural break."},"2":{"band":"tough","label":"Slow going","score":10,"words":29,"reasons":["29 words, 7 over the 22-word budget"],"fix":"Cut it into two sentences at the first natural break."},"3":{"band":"hard","label":"Hard to read","score":27,"words":33,"reasons":["33 words, 11 over the 22-word budget","3 clause breaks stacked in one sentence","two independent clauses welded with a coordinator"],"fix":"Cut it into two sentences at the first natural break."},"4":{"band":"tough","label":"Slow going","score":11,"words":25,"reasons":["3 clause breaks stacked in one sentence","25 words, 3 over the 22-word budget"],"fix":"Give each clause its own sentence, or turn the list of them into bullets."},"5":{"band":"tough","label":"Slow going","score":12,"words":27,"reasons":["27 words, 5 over the 22-word budget","two independent clauses welded with a coordinator"],"fix":"Cut it into two sentences at the first natural break."},"6":{"band":"hard","label":"Hard to read","score":39,"words":34,"reasons":["34 words, 12 over the 22-word budget","3 clause breaks stacked in one sentence","passive voice","2 verbs buried inside nouns","two independent clauses welded with a coordinator"],"fix":"Cut it into two sentences at the first natural break."},"7":{"band":"hard","label":"Hard to read","score":19,"words":29,"reasons":["29 words, 7 over the 22-word budget","2 verbs buried inside nouns","two independent clauses welded with a coordinator"],"fix":"Cut it into two sentences at the first natural break."},"8":{"band":"tough","label":"Slow going","score":13,"words":14,"reasons":["passive voice","two independent clauses welded with a coordinator","2 clause breaks stacked in one sentence"],"fix":"Name the thing doing the work and put it in front of the verb."},"9":{"band":"tough","label":"Slow going","score":13,"words":29,"reasons":["29 words, 7 over the 22-word budget","2 clause breaks stacked in one sentence"],"fix":"Cut it into two sentences at the first natural break."},"10":{"band":"tough","label":"Slow going","score":14,"words":24,"reasons":["3 clause breaks stacked in one sentence","two independent clauses welded with a coordinator","24 words, 2 over the 22-word budget"],"fix":"Give each clause its own sentence, or turn the list of them into bullets."},"11":{"band":"tough","label":"Slow going","score":14,"words":32,"reasons":["32 words, 10 over the 22-word budget"],"fix":"Cut it into two sentences at the first natural break."},"12":{"band":"tough","label":"Slow going","score":9,"words":25,"reasons":["two independent clauses welded with a coordinator","25 words, 3 over the 22-word budget"],"fix":"Put a full stop where the comma is. Each half is already a sentence."}},"verdicts":{"VERIFIED":{"severity":"off","label":"Verified","hue":152,"requires":["source","quote"]},"EXTERNAL":{"severity":"off","label":"External source","hue":248,"requires":["source"]},"FIGURE":{"severity":"off","label":"Read off a figure","hue":304,"requires":[]},"INFERRED":{"severity":"warn","label":"Inferred","hue":100,"requires":[["note","derivation"]]},"DOC-DEFECT":{"severity":"warn","label":"Source is wrong","hue":68,"requires":["source",["note","derivation"]]},"UNSOURCED":{"severity":"error","label":"No source found","hue":32,"requires":[],"emphatic":true},"CONTRADICTED":{"severity":"error","label":"Contradicted","hue":10,"requires":[["note","derivation"]],"emphatic":true}}}</script>
+<script>
+(function () {
+  var dataNode = document.getElementById('gt-data');
+  var data = dataNode ? JSON.parse(dataNode.textContent) : {};
+  var card = document.getElementById('gt-card');
+  var pinned = null;
+  var current = null;
+
+  // ── Theme ──────────────────────────────────────────────────────────────
+  var toggle = document.getElementById('gt-theme');
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      var root = document.documentElement;
+      var now = root.dataset.theme
+        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      var next = now === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem('gtTheme', next); } catch (e) {}
+      toggle.textContent = next === 'dark' ? 'light' : 'dark';
+    });
+  }
+
+  if (!card) return;
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function spanCard(span) {
+    var verdict = (data.verdicts && data.verdicts[span.verdict]) || {};
+    var out = '';
+    out += '<div class="gt-card-verdict" style="--h:' + (verdict.hue == null ? 210 : verdict.hue) + '">'
+      + esc(verdict.label || span.verdict) + '</div>';
+    if (span.sourceLabel) {
+      out += '<div class="gt-card-row"><div class="gt-card-label">Source</div>'
+        + '<div class="gt-card-src">'
+        + (span.permalink
+            ? '<a href="' + esc(span.permalink) + '" target="_blank" rel="noopener noreferrer">' + esc(span.sourceLabel) + '</a>'
+            : esc(span.sourceLabel))
+        + '</div></div>';
+    }
+    if (span.quote) {
+      out += '<div class="gt-card-row"><div class="gt-card-label">Quote</div>'
+        + '<div class="gt-card-quote">' + esc(span.quote) + '</div></div>';
+    }
+    if (span.lineUnconfirmed) {
+      out += '<div class="gt-card-warn">line unconfirmed at this pin, so the link points at the file</div>';
+    }
+    if (span.note) {
+      out += '<div class="gt-card-row"><div class="gt-card-label">Note</div>'
+        + '<div class="gt-card-note">' + esc(span.note) + '</div></div>';
+    }
+    if (span.derivation) {
+      out += '<div class="gt-card-row"><div class="gt-card-label">Derivation</div>'
+        + '<div class="gt-card-note">' + esc(span.derivation) + '</div></div>';
+    }
+    out += '<div class="gt-card-hint">click to pin, Escape to close</div>';
+    return out;
+  }
+
+  function readCard(entry) {
+    var out = '';
+    out += '<div class="gt-card-verdict" style="--h:' + (entry.band === 'hard' ? 4 : 38) + '">'
+      + esc(entry.label) + ' &middot; ' + entry.score + '</div>';
+    out += '<div class="gt-card-row"><div class="gt-card-label">' + entry.words + ' words</div><ul>';
+    for (var i = 0; i < entry.reasons.length; i += 1) out += '<li>' + esc(entry.reasons[i]) + '</li>';
+    out += '</ul></div>';
+    out += '<div class="gt-card-row gt-card-fix">' + esc(entry.fix) + '</div>';
+    out += '<div class="gt-card-hint">click to pin, Escape to close</div>';
+    return out;
+  }
+
+  function place(target) {
+    // getClientRects()[0], never getBoundingClientRect(). A wrapped sentence's
+    // bounding box starts at the leftmost line, which is not where the reader
+    // is looking.
+    var rects = target.getClientRects();
+    var rect = rects.length ? rects[0] : target.getBoundingClientRect();
+
+    // The card never measures itself. CSS fixes the footprint, so this is known.
+    var width = Math.min(380, window.innerWidth - 24);
+    var height = card.offsetHeight || 200;
+    var gap = 10;
+
+    var below = window.innerHeight - rect.bottom;
+    var above = rect.top;
+    var top = below >= height + gap || below >= above
+      ? rect.bottom + gap
+      : Math.max(12, rect.top - height - gap);
+
+    var left = Math.min(
+      Math.max(12, rect.left),
+      Math.max(12, window.innerWidth - width - 12)
+    );
+
+    card.style.width = width + 'px';
+    card.style.left = left + 'px';
+    card.style.top = Math.min(top, window.innerHeight - 40) + 'px';
+  }
+
+  function open(target, html) {
+    card.innerHTML = html;
+    card.dataset.open = '1';
+    current = target;
+    place(target);
+  }
+
+  function close() {
+    card.dataset.open = '0';
+    card.innerHTML = '';
+    current = null;
+    pinned = null;
+  }
+
+  function contentFor(target) {
+    var spanId = target.getAttribute('data-span');
+    if (spanId != null && data.spans && data.spans[spanId]) return spanCard(data.spans[spanId]);
+    var readId = target.getAttribute('data-read');
+    if (readId != null && data.sentences && data.sentences[readId]) return readCard(data.sentences[readId]);
+    return null;
+  }
+
+  function bind(target) {
+    var show = function () {
+      if (pinned && pinned !== target) return;
+      var html = contentFor(target);
+      if (html) open(target, html);
+    };
+    target.addEventListener('mouseenter', show);
+    target.addEventListener('focus', show);
+    target.addEventListener('mouseleave', function () {
+      if (pinned === target) return;
+      close();
+    });
+    target.addEventListener('click', function (event) {
+      event.stopPropagation();
+      if (pinned === target) { close(); return; }
+      pinned = target;
+      var html = contentFor(target);
+      if (html) open(target, html);
+    });
+  }
+
+  var targets = document.querySelectorAll('[data-span], [data-read]');
+  for (var i = 0; i < targets.length; i += 1) bind(targets[i]);
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') close();
+  });
+  document.addEventListener('click', function () { if (pinned) close(); });
+  card.addEventListener('click', function (event) { event.stopPropagation(); });
+
+  // Re-place whatever is open, coalesced onto one task tick.
+  var queued = false;
+  function reflow() {
+    if (queued || !current) return;
+    queued = true;
+    setTimeout(function () {
+      queued = false;
+      if (current && card.dataset.open === '1') place(current);
+    }, 0);
+  }
+  window.addEventListener('scroll', reflow, { passive: true });
+  window.addEventListener('resize', reflow);
+
+  // ── Index table sorting ────────────────────────────────────────────────
+  var list = document.querySelector('table.gt-list');
+  if (list) {
+    var headers = list.querySelectorAll('th[data-key]');
+    for (var h = 0; h < headers.length; h += 1) {
+      (function (header) {
+        header.addEventListener('click', function () {
+          var key = header.getAttribute('data-key');
+          var numeric = header.getAttribute('data-numeric') === '1';
+          var descending = header.getAttribute('aria-sort') !== 'descending';
+          for (var k = 0; k < headers.length; k += 1) headers[k].removeAttribute('aria-sort');
+          header.setAttribute('aria-sort', descending ? 'descending' : 'ascending');
+
+          var body = list.tBodies[0];
+          var rows = Array.prototype.slice.call(body.rows);
+          rows.sort(function (a, b) {
+            var left = a.getAttribute('data-' + key) || '';
+            var right = b.getAttribute('data-' + key) || '';
+            var result = numeric ? Number(left) - Number(right) : String(left).localeCompare(String(right));
+            return descending ? -result : result;
+          });
+          for (var r = 0; r < rows.length; r += 1) body.appendChild(rows[r]);
+        });
+      })(headers[h]);
+    }
+  }
+})();
+</script>
+</body>
+</html>

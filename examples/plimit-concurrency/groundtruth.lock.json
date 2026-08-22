@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "updated": "2026-08-22T14:47:04.090Z",
+  "sources": {
+    "plimit": {
+      "id": "plimit",
+      "kind": "git",
+      "at": "2026-08-22T14:47:03.984Z",
+      "meta": {
+        "repo": "sindresorhus/p-limit",
+        "host": "github.com",
+        "ref": "main",
+        "sha": "df476048d023ff868cd45b35ee47f5fb0ca2b25a"
+      }
+    }
+  }
+}

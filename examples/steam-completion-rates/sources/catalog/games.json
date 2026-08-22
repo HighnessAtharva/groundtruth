@@ -1,0 +1,48 @@
+[
+  {
+    "app": "ashfall-reach",
+    "name": "Ashfall Reach",
+    "release_year": 2024,
+    "price_usd": 14.99,
+    "has_tutorial": true,
+    "genres": [
+      "action",
+      "roguelite"
+    ],
+    "synthetic": true
+  },
+  {
+    "app": "harrow-line",
+    "name": "Harrow Line",
+    "release_year": 2025,
+    "price_usd": 19.99,
+    "has_tutorial": true,
+    "genres": [
+      "horror"
+    ],
+    "synthetic": true
+  },
+  {
+    "app": "nine-lanterns",
+    "name": "Nine Lanterns",
+    "release_year": 2023,
+    "price_usd": 9.99,
+    "has_tutorial": false,
+    "genres": [
+      "puzzle"
+    ],
+    "synthetic": true
+  },
+  {
+    "app": "verdant-sump",
+    "name": "Verdant Sump",
+    "release_year": 2024,
+    "price_usd": 24.99,
+    "has_tutorial": true,
+    "genres": [
+      "survival",
+      "crafting"
+    ],
+    "synthetic": true
+  }
+]
