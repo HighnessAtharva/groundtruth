@@ -106,15 +106,18 @@ jobs:
         run: |
           name="$(node -p 'require("./package.json").name')"
           version="$(node -p 'require("./package.json").version')"
-          for attempt in 1 2 3 4 5; do
+          # A first publish under a new scope can take several minutes to become
+          # readable, so this waits ~5 minutes. `npm publish` printing `+ pkg@ver`
+          # already means the write succeeded; this only confirms readability.
+          for attempt in $(seq 1 20); do
             if [ "$(npm view "$name@$version" version --silent 2>/dev/null)" = "$version" ]; then
-              echo "$name@$version is live"
+              echo "$name@$version is readable after $((attempt * 15))s"
               exit 0
             fi
-            echo "not visible yet, waiting"
-            sleep 10
+            echo "attempt $attempt: not readable yet"
+            sleep 15
           done
-          echo "::error::published, but the registry did not report $version within 50s"
+          echo "::warning::$name@$version published, but was not readable within 5 minutes. This is usually propagation on a new scope, not a failed publish. Check https://www.npmjs.com/package/$name"
           exit 1
 
       # Proof the published artifact works, rather than proof it uploaded.
@@ -141,5 +144,7 @@ jobs:
         if: always()
         with:
           name: tarball
-          path: groundtruth-*.tgz
+          # Not a name-derived glob. `npm pack` renames a scoped tarball, so the
+          # first scoped release uploaded nothing and said so only in a warning.
+          path: '*.tgz'
           retention-days: 14
