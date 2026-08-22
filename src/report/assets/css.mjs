@@ -112,7 +112,7 @@ export const CSS = `
     --tough: oklch(0.82 0.15 100);
 
     --v-l: 0.76;
-    --v-c: 0.128;
+    --v-c: 0.124;
     --v-wash-l: 0.345;
     --v-wash-c: 0.06;
     --v-edge-l: 0.5;
@@ -153,7 +153,7 @@ export const CSS = `
   --tough: oklch(0.82 0.15 100);
 
   --v-l: 0.76;
-  --v-c: 0.128;
+  --v-c: 0.124;
   --v-wash-l: 0.345;
   --v-wash-c: 0.06;
   --v-edge-l: 0.5;

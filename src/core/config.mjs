@@ -31,7 +31,10 @@ export const DEFAULT_VERDICTS = {
   // that draws a background wash.
   VERIFIED: { severity: 'off', label: 'Verified', hue: 152, requires: ['source', 'quote'] },
   EXTERNAL: { severity: 'off', label: 'External source', hue: 248, requires: ['source'] },
-  FIGURE: { severity: 'off', label: 'Read off a figure', hue: 304, requires: [] },
+  FIGURE: { severity: 'off', label: 'Read off a figure', hue: 312, requires: [] },
+  // What `draft` writes. Warns rather than blocks, because it records that nobody
+  // has looked yet, which is a different fact from having looked and found nothing.
+  TODO: { severity: 'warn', label: 'Not checked yet', hue: 280, requires: [] },
   // A nested array means "at least one of these". A derivation explains an
   // inference at least as well as a note does, and demanding both would push
   // authors to write the same sentence twice.
