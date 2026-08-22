@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="470" viewBox="0 0 1240 470" font-family="ui-sans-serif,Inter,Segoe UI,Helvetica,Arial,sans-serif">
+  <rect width="1240" height="470" rx="16" fill="#0B0E14"/>
+  <rect x="0.75" y="0.75" width="1238.5" height="468.5" rx="15.25" fill="none" stroke="#242C3A" stroke-width="1.5"/>
+
+  <text x="40" y="46" fill="#7C8798" font-size="13" font-family="ui-monospace,Consolas,monospace" letter-spacing="1.6">HOW ONE CLAIM GETS CHECKED</text>
+
+  <!-- boxes -->
+  <g font-size="15">
+    <!-- doc -->
+    <rect x="40" y="76" width="290" height="150" rx="11" fill="#111722" stroke="#2A3242"/>
+    <text x="62" y="106" fill="#F2F5FA" font-size="15.5" font-weight="600">1. Your document</text>
+    <text x="62" y="134" fill="#9AA5B6" font-size="14">article/keys.md</text>
+    <text x="62" y="166" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">The Armor Key opens</text>
+    <text x="62" y="187" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">three doors.</text>
+    <text x="62" y="211" fill="#7C8798" font-size="12.5">You never touch this file to add a claim.</text>
+
+    <!-- span map -->
+    <rect x="40" y="262" width="290" height="150" rx="11" fill="#111722" stroke="#2A3242"/>
+    <text x="62" y="292" fill="#F2F5FA" font-size="15.5" font-weight="600">2. The span map</text>
+    <text x="62" y="320" fill="#9AA5B6" font-size="14">groundtruth/spans/keys.mjs</text>
+    <text x="62" y="352" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">match: "opens three doors"</text>
+    <text x="62" y="373" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">source: notes:armor-key.md</text>
+    <text x="62" y="394" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">quote:  "opens four doors."</text>
+
+    <!-- source -->
+    <rect x="475" y="76" width="290" height="150" rx="11" fill="#111722" stroke="#2A3242"/>
+    <text x="497" y="106" fill="#F2F5FA" font-size="15.5" font-weight="600">3. The source</text>
+    <text x="497" y="134" fill="#9AA5B6" font-size="14">a file, a URL, a pinned commit</text>
+    <text x="497" y="166" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">The Armor Key opens</text>
+    <text x="497" y="187" fill="#D5DBE6" font-size="13.5" font-family="ui-monospace,Consolas,monospace">four doors.</text>
+    <text x="497" y="211" fill="#7C8798" font-size="12.5">Cached on disk, so the check runs offline.</text>
+
+    <!-- two checks -->
+    <rect x="475" y="262" width="290" height="150" rx="11" fill="#111722" stroke="#2A3242"/>
+    <text x="497" y="292" fill="#F2F5FA" font-size="15.5" font-weight="600">4. Two exact-match tests</text>
+    <circle cx="504" cy="322" r="5" fill="#4ADE80"/>
+    <text x="519" y="327" fill="#D5DBE6" font-size="13.5">Is the match still in the document?</text>
+    <circle cx="504" cy="352" r="5" fill="#4ADE80"/>
+    <text x="519" y="357" fill="#D5DBE6" font-size="13.5">Is the quote still in the source?</text>
+    <text x="497" y="392" fill="#7C8798" font-size="12.5">Either one moves and the claim is flagged.</text>
+
+    <!-- verdict -->
+    <rect x="910" y="76" width="290" height="336" rx="11" fill="#111722" stroke="#2A3242"/>
+    <text x="932" y="106" fill="#F2F5FA" font-size="15.5" font-weight="600">5. The verdict decides the exit code</text>
+    <g font-size="13.5">
+      <rect x="932" y="128" width="14" height="14" rx="3" fill="#4ADE80"/>
+      <text x="958" y="140" fill="#D5DBE6">VERIFIED</text><text x="1120" y="140" fill="#4ADE80" font-family="ui-monospace,Consolas,monospace">pass</text>
+      <rect x="932" y="160" width="14" height="14" rx="3" fill="#F2C14E"/>
+      <text x="958" y="172" fill="#D5DBE6">INFERRED</text><text x="1110" y="172" fill="#F2C14E" font-family="ui-monospace,Consolas,monospace">warn</text>
+      <rect x="932" y="192" width="14" height="14" rx="3" fill="#F2C14E"/>
+      <text x="958" y="204" fill="#D5DBE6">TODO</text><text x="1110" y="204" fill="#F2C14E" font-family="ui-monospace,Consolas,monospace">warn</text>
+      <rect x="932" y="224" width="14" height="14" rx="3" fill="#FF6B6B"/>
+      <text x="958" y="236" fill="#D5DBE6">UNSOURCED</text><text x="1112" y="236" fill="#FF6B6B" font-family="ui-monospace,Consolas,monospace">block</text>
+      <rect x="932" y="256" width="14" height="14" rx="3" fill="#FF6B6B"/>
+      <text x="958" y="268" fill="#D5DBE6">CONTRADICTED</text><text x="1112" y="268" fill="#FF6B6B" font-family="ui-monospace,Consolas,monospace">block</text>
+    </g>
+    <path d="M932 292 H1178" stroke="#242C3A"/>
+    <text x="932" y="320" fill="#7C8798" font-size="12.5">Here the quote says four and the article</text>
+    <text x="932" y="340" fill="#7C8798" font-size="12.5">says three, so the verdict is CONTRADICTED</text>
+    <text x="932" y="360" fill="#7C8798" font-size="12.5">and the build stops.</text>
+    <text x="932" y="392" fill="#FF6B6B" font-size="13.5" font-family="ui-monospace,Consolas,monospace">exit 1</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#3A4658" stroke-width="1.6" fill="none">
+    <path d="M185 226 V262" marker-end="url(#a)"/>
+    <path d="M330 337 H400 V151 H475" marker-end="url(#a)"/>
+    <path d="M620 226 V262" marker-end="url(#a)"/>
+    <path d="M765 337 H838 V244 H910" marker-end="url(#a)"/>
+  </g>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#3A4658" stroke="none"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="groundtruth">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B2333"/>
+      <stop offset="1" stop-color="#0B0E14"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <rect x="0.75" y="0.75" width="126.5" height="126.5" rx="27.25" fill="none" stroke="#2C3648" stroke-width="1.5"/>
+
+  <!-- the ground line -->
+  <path d="M22 96 H106" stroke="#4ADE80" stroke-width="5" stroke-linecap="round"/>
+  <path d="M22 108 H70" stroke="#2C3648" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- the claim, tethered to the ground -->
+  <path d="M46 34 H106" stroke="#E6EAF2" stroke-width="5" stroke-linecap="round"/>
+  <path d="M46 52 H88" stroke="#7C8798" stroke-width="5" stroke-linecap="round"/>
+  <path d="M46 70 H98" stroke="#7C8798" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- the anchor: quote mark bound down to the line -->
+  <path d="M32 30 v58" stroke="#4ADE80" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="32" cy="96" r="8" fill="#4ADE80"/>
+  <path d="M28.5 96 l2.8 3 4.4 -5.4" stroke="#0B0E14" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
