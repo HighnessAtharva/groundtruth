@@ -113,11 +113,27 @@ export function documentText(blocks) {
   return parts.join('\n\n');
 }
 
-/** Reader text of the blocks before the first heading of `depth` or shallower. */
+/**
+ * The blocks an answer engine reads: everything before the first section
+ * heading.
+ *
+ * A leading H1 is the document's title, not a section boundary, so it does not
+ * close the opening. Treating it as one measured every document's opening as
+ * empty, which made the answer-first check pass on a page that opens with "In
+ * this article we will" and fail on a page that answers in its first sentence.
+ * Exactly backwards.
+ */
 export function openingBlocks(blocks, depth = 2) {
   const out = [];
+  let seenTitle = false;
   for (const block of blocks) {
-    if (block.type === 'heading' && block.depth <= depth) break;
+    if (block.type === 'heading') {
+      if (block.depth === 1 && !seenTitle && out.every((entry) => !entry.readerText?.trim())) {
+        seenTitle = true;
+        continue;
+      }
+      if (block.depth <= depth) break;
+    }
     out.push(block);
   }
   return out;
